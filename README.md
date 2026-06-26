@@ -1,7 +1,7 @@
 # Samba Web Management Panel
 
 > [!IMPORTANT]
-> **Внимание!** Данная панель является нодой и **не работает автономно**. Для её функционирования (аутентификации операторов) требуется предварительно развернутый сервер авторизации [Centralized Authentication Server](https://github.com/Ttolyanich/centralized-auth).
+> **Внимание!** Данная панель является нодой и **не работает автономно**. Для её функционирования (аутентификации операторов) требуется предварительно развернутый сервер авторизации [Centralized Authentication Server](https://github.com/<YOUR_GITHUB_USERNAME>/centralized-auth).
 
 Легковесная, современная и безопасная веб-панель на Python/Flask для управления локальными пользователями Samba и разграничения прав доступа к сетевым каталогам на основе системных групп Linux.
 
@@ -82,7 +82,7 @@
 1. **Клонирование репозитория и создание сервисного аккаунта**:
    Склонируйте репозиторий в каталог `/opt/samba-web`:
    ```bash
-   sudo git clone git@github.com:Ttolyanich/samba-web.git /opt/samba-web
+   sudo git clone git@github.com:<YOUR_GITHUB_USERNAME>/samba-web.git /opt/samba-web
    ```
    Создайте выделенного системного пользователя `samba-web` без пароля и домашней папки:
    ```bash
@@ -111,7 +111,7 @@
    {
      "mode": "node",
      "secret_key": "ВАШ_СЛУЧАЙНЫЙ_СЕКРЕТНЫЙ_КЛЮЧ",
-     "central_auth_url": "http://192.168.102.146:5001",
+     "central_auth_url": "http://<CENTRAL_AUTH_SERVER_IP>:5001",
      "node_api_token": "ТОКЕН_АВТОРИЗАЦИИ_НОДЫ_НА_СЕРВЕРЕ",
      "bind_host": "0.0.0.0",
      "bind_port": 5002,
