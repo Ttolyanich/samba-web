@@ -1,5 +1,8 @@
 # Samba Web Management Panel
 
+> [!IMPORTANT]
+> **Внимание!** Данная панель является нодой и **не работает автономно**. Для её функционирования (аутентификации операторов) требуется предварительно развернутый сервер авторизации [Centralized Authentication Server](https://github.com/Ttolyanich/centralized-auth).
+
 Легковесная, современная и безопасная веб-панель на Python/Flask для управления локальными пользователями Samba и разграничения прав доступа к сетевым каталогам на основе системных групп Linux.
 
 Интерфейс выполнен в премиальном темном стиле (Crimson Red / Glassmorphism) в тон панели управления VPN.
@@ -76,27 +79,34 @@
 
 ## Установка и развертывание
 
-1. **Клонирование репозитория и настройка директории**:
+1. **Клонирование репозитория и создание сервисного аккаунта**:
    Склонируйте репозиторий в каталог `/opt/samba-web`:
    ```bash
-   git clone git@github.com:Ttolyanich/samba-web.git /opt/samba-web
-   cd /opt/samba-web
+   sudo git clone git@github.com:Ttolyanich/samba-web.git /opt/samba-web
+   ```
+   Создайте выделенного системного пользователя `samba-web` без пароля и домашней папки:
+   ```bash
+   sudo useradd -r -s /bin/false -d /opt/samba-web samba-web
+   ```
+   Установите права владельца на каталог с проектом для созданного пользователя:
+   ```bash
+   sudo chown -R samba-web:samba-web /opt/samba-web
    ```
 
 2. **Установка Python зависимостей**:
    Установите необходимые библиотеки (Flask, requests, openpyxl) с помощью `pip` (или через системный пакетный менеджер):
    ```bash
-   pip3 install -r requirements.txt
+   pip3 install -r /opt/samba-web/requirements.txt
    ```
 
 3. **Настройка прав `sudo`**:
-   Добавьте в `/etc/sudoers.d/samba-web` права для пользователя (например, `tolyanich`):
+   Для того чтобы панель, работающая под ограниченным сервисным пользователем `samba-web`, могла управлять системными учетными записями Samba, добавьте в `/etc/sudoers.d/samba-web` следующие права:
    ```text
-   tolyanich ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd
+   samba-web ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd
    ```
 
 4. **Конфигурация приложения**:
-   Отредактируйте файл `config.json`:
+   Отредактируйте файл `/opt/samba-web/config.json`:
    ```json
    {
      "mode": "node",
@@ -109,16 +119,16 @@
    }
    ```
 
-4. **Настройка Systemd службы**:
-   Скопируйте и настройте службу `samba-web.service`:
+5. **Настройка Systemd службы**:
+   Скопируйте и запустите службу `samba-web.service` (она по умолчанию настроена на запуск от пользователя `User=samba-web`):
    ```bash
-   sudo cp samba-web.service /etc/systemd/system/
+   sudo cp /opt/samba-web/samba-web.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable samba-web
    sudo systemctl start samba-web
    ```
 
-5. **Проверка логов**:
+6. **Проверка логов**:
    ```bash
    sudo journalctl -u samba-web -f
    ```
