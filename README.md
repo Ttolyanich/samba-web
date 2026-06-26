@@ -83,13 +83,19 @@
    cd /opt/samba-web
    ```
 
-2. **Настройка прав `sudo`**:
+2. **Установка Python зависимостей**:
+   Установите необходимые библиотеки (Flask, requests, openpyxl) с помощью `pip` (или через системный пакетный менеджер):
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+
+3. **Настройка прав `sudo`**:
    Добавьте в `/etc/sudoers.d/samba-web` права для пользователя (например, `tolyanich`):
    ```text
    tolyanich ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd
    ```
 
-3. **Конфигурация приложения**:
+4. **Конфигурация приложения**:
    Отредактируйте файл `config.json`:
    ```json
    {
