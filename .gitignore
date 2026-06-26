@@ -1,0 +1,6 @@
+config.json
+samba-node.db
+__pycache__/
+*.pyc
+.idea/
+.vscode/

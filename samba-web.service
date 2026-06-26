@@ -1,0 +1,15 @@
+[Unit]
+Description=Samba Web Management Panel
+After=network.target
+
+[Service]
+Type=simple
+User=tolyanich
+WorkingDirectory=/opt/samba-web
+Environment=SAMBA_WEB_CONFIG=/opt/samba-web/config.json
+ExecStart=/usr/bin/python3 /opt/samba-web/app.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samba Web Panel</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-zone">
+                <div class="logo-box">S</div>
+                <span class="brand-title">SAMBA <span class="accent-text">PANEL</span></span>
+            </div>
+            <div class="user-profile-zone">
+                <span id="currentUserSpan" class="current-user-name">Загрузка...</span>
+                <button onclick="handleLogout()" class="btn-logout">Выйти</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        
+        <!-- Вкладки навигации -->
+        <div class="tabs-container">
+            <button id="tabMatrixBtn" class="tab-btn active" onclick="switchTab('matrixTab')">Матрица доступа</button>
+            <button id="tabUsersBtn" class="tab-btn" onclick="switchTab('usersTab')">Пользователи Samba</button>
+            <button id="tabAuditBtn" class="tab-btn" onclick="switchTab('auditTab')">Журнал аудита</button>
+        </div>
+
+        <!-- Содержимое вкладок -->
+        <div class="tab-content" id="matrixTab">
+            <div class="panel-card">
+                <div class="card-header table-actions">
+                    <div>
+                        <h2 class="header-title uppercase-accent">Матрица прав доступа</h2>
+                        <p class="header-subtitle font-mono">Назначение прав на каталоги Samba через системные группы. Изменения применяются мгновенно.</p>
+                    </div>
+                    <div class="filter-zone">
+                        <div class="search-wrapper">
+                            <input type="text" id="matrixSearch" oninput="renderMatrixTable()" placeholder="Поиск сотрудника...">
+                        </div>
+                        <button class="btn-action-reset" style="background-color: var(--bg-offset); border-color: var(--border-color); color: var(--text-main);" onclick="openShareLinkModal()">Поделиться отчетом</button>
+                        <button class="btn-excel" onclick="downloadExcel()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Экспорт в Excel
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-outer-wrapper">
+                    <div class="table-wrapper">
+                        <table class="matrix-table" id="matrixTable">
+                            <thead>
+                                <tr id="matrixHeader">
+                                    <th>Общая папка / Путь</th>
+                                    <!-- Сюда динамически добавятся пользователи -->
+                                </tr>
+                            </thead>
+                            <tbody id="matrixBody">
+                                <tr><td colspan="100%" class="text-center py-4 text-muted">Загрузка матрицы доступа...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="legend-box">
+                    <span class="legend-item"><span class="legend-badge none">—</span> Нет доступа</span>
+                    <span class="legend-item"><span class="legend-badge ro">RO</span> Только чтение</span>
+                    <span class="legend-item"><span class="legend-badge rw">RW</span> Чтение и запись</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="usersTab">
+            <div class="panel-card">
+                <div class="card-header table-actions">
+                    <div>
+                        <h2 class="header-title uppercase-muted">Пользователи Samba</h2>
+                        <p class="header-subtitle">Управление локальными учетными записями и правами доступа сотрудников.</p>
+                    </div>
+                    <div class="filter-zone">
+                        <div class="search-wrapper">
+                            <input type="text" id="userSearch" oninput="renderUsersTable()" placeholder="Поиск сотрудника...">
+                        </div>
+                        <button class="btn-submit" onclick="openCreateUserModal()">+ Новый пользователь</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>ФИО сотрудника</th>
+                                <th>Статус</th>
+                                <th class="text-right">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersBody">
+                            <tr><td colspan="4" class="text-center py-4 text-muted">Загрузка списка пользователей...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="auditTab">
+            <div class="panel-card">
+                <div class="card-header table-actions">
+                    <div>
+                        <h2 class="header-title uppercase-muted">Журнал аудита</h2>
+                        <p class="header-subtitle">История действий операторов по управлению доступом.</p>
+                    </div>
+                    <div class="filter-zone">
+                        <div class="search-wrapper">
+                            <input type="text" id="auditSearch" oninput="filterAuditLogs()" placeholder="Поиск по журналу...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table" id="auditTable">
+                        <thead>
+                            <tr>
+                                <th>Время</th>
+                                <th>Оператор</th>
+                                <th>Действие</th>
+                                <th>Детали</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditBody">
+                            <tr><td colspan="4" class="text-center py-4 text-muted">Загрузка логов...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно создания пользователя -->
+    <div class="modal-overlay hidden" id="createUserModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-alert-icon">+</div>
+                <div class="modal-title">Создание пользователя Samba</div>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm" onsubmit="handleCreateUser(event)">
+                    <div class="form-group">
+                        <label for="newFullName">ФИО сотрудника (Например: Иван Иванов)</label>
+                        <input type="text" id="newFullName" required placeholder="Введите имя и фамилию">
+                    </div>
+                    <div class="form-group">
+                        <label for="newUsername">Имя пользователя / Логин (латиница, цифры, _, -, .)</label>
+                        <input type="text" id="newUsername" required placeholder="Например: ivan_ivanov">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Пароль</label>
+                        <div class="input-with-action">
+                            <input type="text" id="newPassword" required placeholder="Введите пароль">
+                            <button type="button" class="btn-secondary" onclick="generateRandomPassword('newPassword')">Сгенерировать</button>
+                        </div>
+                    </div>
+                    <div id="createUserError" class="error-msg hidden" style="margin-bottom: 16px;"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-text" onclick="closeCreateUserModal()">Отмена</button>
+                        <button type="submit" id="createUserBtn" class="btn-submit">Создать</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно сброса пароля -->
+    <div class="modal-overlay hidden" id="resetPasswordModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-alert-icon">!</div>
+                <div class="modal-title">Сброс пароля Samba</div>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-muted);">
+                    Вы собираетесь сбросить пароль для пользователя: <span id="resetTargetUsername" class="highlight-box"></span>.
+                </p>
+                <form id="resetPasswordForm" onsubmit="handleResetPassword(event)">
+                    <input type="hidden" id="resetUsernameHidden">
+                    <div class="form-group">
+                        <label for="resetPassword">Новый пароль</label>
+                        <div class="input-with-action">
+                            <input type="text" id="resetPassword" required placeholder="Введите новый пароль">
+                            <button type="button" class="btn-secondary" onclick="generateRandomPassword('resetPassword')">Сгенерировать</button>
+                        </div>
+                    </div>
+                    <div id="resetPasswordError" class="error-msg hidden" style="margin-bottom: 16px;"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-text" onclick="closeResetPasswordModal()">Отмена</button>
+                        <button type="submit" id="resetPasswordBtn" class="btn-submit">Сбросить пароль</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования сотрудника -->
+    <div class="modal-overlay hidden" id="editUserModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-alert-icon">✎</div>
+                <div class="modal-title">Редактирование сотрудника</div>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm" onsubmit="handleEditUser(event)">
+                    <input type="hidden" id="editOldUsernameHidden">
+                    <div class="form-group">
+                        <label for="editFullName">ФИО сотрудника (Обязательно)</label>
+                        <input type="text" id="editFullName" required placeholder="Введите имя и фамилию">
+                    </div>
+                    <div class="form-group">
+                        <label for="editUsername">Имя пользователя / Логин (латиница, цифры, _, -, .)</label>
+                        <input type="text" id="editUsername" required placeholder="Например: ivan_ivanov">
+                    </div>
+                    <div id="editUserError" class="error-msg hidden" style="margin-bottom: 16px;"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-text" onclick="closeEditUserModal()">Отмена</button>
+                        <button type="submit" id="editUserBtn" class="btn-submit">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно управления временными ссылками -->
+    <div class="modal-overlay hidden" id="shareLinkModal">
+        <div class="modal-card" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-alert-icon">🔗</div>
+                <div class="modal-title">Временные ссылки для клиентов / руководства</div>
+            </div>
+            <div class="modal-body">
+                <form id="createShareLinkForm" onsubmit="handleCreateShareLink(event)" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                    <div class="form-group">
+                        <label for="shareDescription">Описание / Цель создания (Например: Для директора компании)</label>
+                        <input type="text" id="shareDescription" required placeholder="Введите описание">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="shareDays">Срок действия ссылки</label>
+                        <select id="shareDays" class="form-select">
+                            <option value="1">1 день</option>
+                            <option value="3">3 дня</option>
+                            <option value="7" selected>7 дней</option>
+                            <option value="30">30 дней</option>
+                        </select>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" id="createShareLinkBtn" class="btn-submit">Создать ссылку</button>
+                    </div>
+                </form>
+
+                <!-- Отображение сгенерированной ссылки -->
+                <div id="generatedLinkContainer" class="hidden" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                    <label style="display:block; font-size:12px; color:var(--success); font-weight:600; margin-bottom:8px;">Ссылка успешно создана:</label>
+                    <div class="input-with-action">
+                        <input type="text" id="generatedLinkUrl" readonly style="background: rgba(0,0,0,0.4); border-color: rgba(16, 185, 129, 0.3);">
+                        <button type="button" class="btn-secondary" onclick="copyGeneratedLink()">Копировать</button>
+                    </div>
+                </div>
+
+                <!-- Список активных ссылок -->
+                <div>
+                    <h3 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; color: var(--text-muted);">Активные ссылки</h3>
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <table class="data-table" style="margin-top: 0; font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Описание</th>
+                                    <th>Истекает</th>
+                                    <th class="text-right">Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shareLinksListBody">
+                                <tr><td colspan="3" class="text-center" style="color:var(--text-muted); padding: 12px;">Активных ссылок нет</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 12px;">
+                <button type="button" class="btn-text" onclick="closeShareLinkModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомления (Toast) -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Глобальное хранилище данных
+        let sharesData = [];
+        let usersData = [];
+        let matrixData = {};
+        let auditLogs = [];
+
+        // Переключение вкладок
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            // Находим активную кнопку по её id
+            let btnId = 'tabMatrixBtn';
+            if (tabId === 'usersTab') btnId = 'tabUsersBtn';
+            if (tabId === 'auditTab') btnId = 'tabAuditBtn';
+            document.getElementById(btnId).classList.add('active');
+
+            if (tabId === 'matrixTab') loadMatrixData();
+            if (tabId === 'usersTab') loadUsersData();
+            if (tabId === 'auditTab') loadAuditLogs();
+        }
+
+        // Показ тоста (уведомления)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Логаут
+        function handleLogout() {
+            window.location.href = './logout';
+        }
+
+        // Экспорт в Excel
+        function downloadExcel() {
+            window.location.href = './api/matrix/export';
+        }
+
+        // Загрузка статуса
+        async function loadStatus() {
+            try {
+                const res = await fetch('./api/status');
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('currentUserSpan').innerText = `Оператор: ${data.username}`;
+                }
+            } catch (err) {
+                console.error("Error loading status:", err);
+            }
+        }
+
+        // Загрузка матрицы прав
+        async function loadMatrixData() {
+            const tbody = document.getElementById('matrixBody');
+            try {
+                const res = await fetch('./api/matrix');
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    tbody.innerHTML = `<tr><td colspan="100%" class="text-center py-4 text-danger">Ошибка: ${data.error}</td></tr>`;
+                    return;
+                }
+
+                sharesData = data.shares;
+                usersData = data.users;
+                matrixData = data.matrix;
+
+                // Сортировка по имени
+                usersData.sort((a, b) => {
+                    const nameA = (a.full_name || a.username).toLowerCase();
+                    const nameB = (b.full_name || b.username).toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+
+                renderMatrixTable();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="100%" class="text-center py-4 text-danger">Ошибка загрузки данных матрицы</td></tr>`;
+            }
+        }
+
+        // Отрисовка таблицы матрицы
+        function renderMatrixTable() {
+            const header = document.getElementById('matrixHeader');
+            const tbody = document.getElementById('matrixBody');
+
+            // Очищаем заголовки, оставляя первый
+            header.innerHTML = '<th>Общая папка / Путь</th>';
+            
+            // Фильтр по поисковому запросу
+            const searchQuery = document.getElementById('matrixSearch') ? document.getElementById('matrixSearch').value.toLowerCase().trim() : '';
+            
+            // Фильтруем только активных пользователей для матрицы
+            const activeUsers = usersData.filter(u => {
+                if (u.disabled) return false;
+                if (!searchQuery) return true;
+                return u.username.toLowerCase().includes(searchQuery) || 
+                       (u.full_name && u.full_name.toLowerCase().includes(searchQuery));
+            });
+
+            activeUsers.forEach(user => {
+                const th = document.createElement('th');
+                th.innerHTML = `
+                    <div class="user-header-info">
+                        <span class="user-header-fullname" title="${user.full_name || user.username}">${user.full_name || '—'}</span>
+                        <span class="user-header-username">${user.username}</span>
+                    </div>
+                `;
+                header.appendChild(th);
+            });
+
+            if (sharesData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="100%" class="text-center py-4 text-muted">В smb.conf не найдено общих папок с ограничениями по группам</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            sharesData.forEach(share => {
+                const tr = document.createElement('tr');
+                
+                // Колонка шары
+                const tdShare = document.createElement('td');
+                tdShare.innerHTML = `
+                    <div class="share-info">
+                        <span class="share-name">${share.name}</span>
+                        <span class="share-path">${share.path}</span>
+                        <div class="share-groups-meta">
+                            ${share.rw_group ? `<span class="meta-badge rw">RW: @${share.rw_group}</span>` : ''}
+                            ${share.ro_group ? `<span class="meta-badge ro">RO: @${share.ro_group}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                tr.appendChild(tdShare);
+
+                // Колонки пользователей
+                activeUsers.forEach(user => {
+                    const tdPerm = document.createElement('td');
+                    const currentAccess = (matrixData[user.username] && matrixData[user.username][share.name]) || 'none';
+                    
+                    const isConfigured = share.rw_group || share.ro_group;
+                    if (!isConfigured) {
+                        tdPerm.innerHTML = `<span class="text-muted-italic">Без ограничений</span>`;
+                    } else {
+                        tdPerm.innerHTML = `
+                            <div class="matrix-control">
+                                <button class="matrix-btn none ${currentAccess === 'none' ? 'active' : ''}" 
+                                        onclick="updatePermission('${user.username}', '${share.name}', 'none')" 
+                                        title="Нет доступа">—</button>
+                                ${share.ro_group ? `
+                                <button class="matrix-btn ro ${currentAccess === 'ro' ? 'active' : ''}" 
+                                        onclick="updatePermission('${user.username}', '${share.name}', 'ro')" 
+                                        title="Только чтение">RO</button>
+                                ` : ''}
+                                ${share.rw_group ? `
+                                <button class="matrix-btn rw ${currentAccess === 'rw' ? 'active' : ''}" 
+                                        onclick="updatePermission('${user.username}', '${share.name}', 'rw')" 
+                                        title="Чтение и запись">RW</button>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+                    tr.appendChild(tdPerm);
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Обновление прав доступа в матрице
+        async function updatePermission(username, shareName, access) {
+            try {
+                const res = await fetch('./api/permissions/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, share_name: shareName, access })
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    showToast(`Права ${username} на папку ${shareName} успешно изменены`);
+                    if (!matrixData[username]) matrixData[username] = {};
+                    matrixData[username][shareName] = access;
+                    renderMatrixTable();
+                } else {
+                    showToast(result.errors ? result.errors.join(', ') : (result.error || 'Ошибка сохранения прав'), 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка соединения с сервером', 'error');
+            }
+        }
+
+        // Загрузка пользователей Samba
+        async function loadUsersData() {
+            const tbody = document.getElementById('usersBody');
+            try {
+                const res = await fetch('./api/matrix'); 
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">Ошибка: ${data.error}</td></tr>`;
+                    return;
+                }
+
+                usersData = data.users;
+                
+                // Сортировка по имени
+                usersData.sort((a, b) => {
+                    const nameA = (a.full_name || a.username).toLowerCase();
+                    const nameB = (b.full_name || b.username).toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+
+                renderUsersTable();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">Ошибка загрузки пользователей</td></tr>`;
+            }
+        }
+
+        // Отрисовка списка пользователей
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersBody');
+            tbody.innerHTML = '';
+
+            const searchQuery = document.getElementById('userSearch') ? document.getElementById('userSearch').value.toLowerCase().trim() : '';
+
+            // Фильтрация
+            const filteredUsers = usersData.filter(u => {
+                if (!searchQuery) return true;
+                return u.username.toLowerCase().includes(searchQuery) || 
+                       (u.full_name && u.full_name.toLowerCase().includes(searchQuery));
+            });
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Нет пользователей, удовлетворяющих запросу</td></tr>`;
+                return;
+            }
+
+            filteredUsers.forEach(user => {
+                const tr = document.createElement('tr');
+                
+                // Статус
+                const statusBadge = user.disabled 
+                    ? '<span class="status-badge revoked">Заблокирован</span>' 
+                    : '<span class="status-badge active">Активен</span>';
+
+                // Действия
+                const blockBtn = user.disabled
+                    ? `<button class="btn-action-rebuild" onclick="toggleUserBlock('${user.username}', false)">Разблокировать</button>`
+                    : `<button class="btn-action-revoke" onclick="toggleUserBlock('${user.username}', true)">Заблокировать</button>`;
+                
+                const resetBtn = `<button class="btn-action-reset" onclick="openResetPasswordModal('${user.username}')">Сбросить пароль</button>`;
+                const editBtn = `<button class="btn-action-reset" onclick="openEditUserModal('${user.username}', '${user.full_name || ''}')">Редактировать</button>`;
+
+                tr.innerHTML = `
+                    <td class="font-mono"><strong>${user.username}</strong></td>
+                    <td>${user.full_name || '—'}</td>
+                    <td>${statusBadge}</td>
+                    <td class="text-right">
+                        <div class="actions-group">
+                            ${editBtn}
+                            ${resetBtn}
+                            ${blockBtn}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Блокировка/разблокировка пользователя
+        async function toggleUserBlock(username, block) {
+            const confirmMsg = block 
+                ? `Вы уверены, что хотите ЗАБЛОКИРОВАТЬ пользователя ${username}? Он потеряет доступ ко всем папкам.`
+                : `Разблокировать пользователя ${username}?`;
+                
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch('./api/users/toggle_block', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, block })
+                });
+                
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    showToast(`Пользователь ${username} ${block ? 'заблокирован' : 'разблокирован'}`);
+                    loadUsersData();
+                } else {
+                    showToast(result.error || 'Не удалось выполнить действие', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка при отправке запроса', 'error');
+            }
+        }
+
+        // Управление модальным окном создания пользователя
+        function openCreateUserModal() {
+            document.getElementById('createUserModal').classList.remove('hidden');
+            document.getElementById('newFullName').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('createUserError').classList.add('hidden');
+        }
+
+        function closeCreateUserModal() {
+            document.getElementById('createUserModal').classList.add('hidden');
+        }
+
+        // Управление модальным окном сброса пароля
+        function openResetPasswordModal(username) {
+            document.getElementById('resetPasswordModal').classList.remove('hidden');
+            document.getElementById('resetUsernameHidden').value = username;
+            document.getElementById('resetTargetUsername').innerText = username;
+            document.getElementById('resetPassword').value = '';
+            document.getElementById('resetPasswordError').classList.add('hidden');
+        }
+
+        function closeResetPasswordModal() {
+            document.getElementById('resetPasswordModal').classList.add('hidden');
+        }
+
+        // Генерация случайного пароля
+        function generateRandomPassword(inputId) {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#%^*()_";
+            let pass = "";
+            for (let i = 0; i < 14; i++) {
+                pass += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById(inputId).value = pass;
+        }
+
+        // Создание пользователя Samba
+        async function handleCreateUser(event) {
+            event.preventDefault();
+            const fullName = document.getElementById('newFullName').value.trim();
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value;
+            const errorDiv = document.getElementById('createUserError');
+            const submitBtn = document.getElementById('createUserBtn');
+
+            errorDiv.classList.add('hidden');
+            submitBtn.innerText = 'Создание...';
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch('./api/users/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, full_name: fullName })
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    showToast(`Пользователь ${username} (${fullName}) создан. Запишите его пароль!`);
+                    closeCreateUserModal();
+                    loadUsersData();
+                } else {
+                    errorDiv.innerText = result.error || 'Ошибка при создании пользователя';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Ошибка соединения с сервером';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.innerText = 'Создать';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Сброс пароля
+        async function handleResetPassword(event) {
+            event.preventDefault();
+            const username = document.getElementById('resetUsernameHidden').value;
+            const password = document.getElementById('resetPassword').value;
+            const errorDiv = document.getElementById('resetPasswordError');
+            const submitBtn = document.getElementById('resetPasswordBtn');
+
+            errorDiv.classList.add('hidden');
+            submitBtn.innerText = 'Сброс...';
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch('./api/users/reset_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    showToast(`Пароль для пользователя ${username} успешно сброшен!`);
+                    closeResetPasswordModal();
+                    loadUsersData();
+                } else {
+                    errorDiv.innerText = result.error || 'Ошибка при сбросе пароля';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Ошибка соединения с сервером';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.innerText = 'Сбросить пароль';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Загрузка логов аудита
+        async function loadAuditLogs() {
+            const tbody = document.getElementById('auditBody');
+            try {
+                const res = await fetch('./api/audit_logs');
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">Ошибка: ${data.error}</td></tr>`;
+                    return;
+                }
+
+                auditLogs = data;
+                renderAuditLogs(auditLogs);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">Ошибка загрузки логов</td></tr>`;
+            }
+        }
+
+        // Отрисовка логов аудита
+        function renderAuditLogs(logs) {
+            const tbody = document.getElementById('auditBody');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Логи отсутствуют</td></tr>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                
+                let actionBadge = `<span class="status-badge">${log.action}</span>`;
+                if (log.action === 'UPDATE_PERMISSIONS') {
+                    actionBadge = `<span class="status-badge active" style="background-color: rgba(197, 47, 49, 0.15); color: var(--accent-hover);">Права</span>`;
+                } else if (log.action === 'CREATE_USER') {
+                    actionBadge = `<span class="status-badge active" style="background-color: rgba(16, 185, 129, 0.15); color: var(--success);">Создание</span>`;
+                } else if (log.action === 'RESET_PASSWORD') {
+                    actionBadge = `<span class="status-badge active" style="background-color: rgba(245, 158, 11, 0.15); color: var(--warning);">Пароль</span>`;
+                } else if (log.action === 'TOGGLE_USER_BLOCK') {
+                    actionBadge = `<span class="status-badge revoked">Блокировка</span>`;
+                } else if (log.action === 'LOGIN') {
+                    actionBadge = `<span class="status-badge" style="background-color: rgba(255, 255, 255, 0.05); color: var(--text-main);">Вход</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="font-mono font-sm">${log.timestamp}</td>
+                    <td><strong>${log.username}</strong></td>
+                    <td>${actionBadge}</td>
+                    <td class="font-sm">${log.details}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Поиск/фильтр логов
+        function filterAuditLogs() {
+            const query = document.getElementById('auditSearch').value.toLowerCase().trim();
+            if (!query) {
+                renderAuditLogs(auditLogs);
+                return;
+            }
+
+            const filtered = auditLogs.filter(log => {
+                return log.username.toLowerCase().includes(query) ||
+                       log.action.toLowerCase().includes(query) ||
+                       log.details.toLowerCase().includes(query);
+            });
+
+            renderAuditLogs(filtered);
+        }
+
+        // Управление модальным окном редактирования
+        function openEditUserModal(username, fullName) {
+            document.getElementById('editUserModal').classList.remove('hidden');
+            document.getElementById('editOldUsernameHidden').value = username;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editFullName').value = fullName;
+            document.getElementById('editUserError').classList.add('hidden');
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.add('hidden');
+        }
+
+        async function handleEditUser(event) {
+            event.preventDefault();
+            const oldUsername = document.getElementById('editOldUsernameHidden').value;
+            const newUsername = document.getElementById('editUsername').value.trim();
+            const newFullName = document.getElementById('editFullName').value.trim();
+            const errorDiv = document.getElementById('editUserError');
+            const submitBtn = document.getElementById('editUserBtn');
+
+            errorDiv.classList.add('hidden');
+            submitBtn.innerText = 'Сохранение...';
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch('./api/users/edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_username: oldUsername, new_username: newUsername, new_fullname: newFullName })
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    showToast(`Данные сотрудника ${newUsername} успешно сохранены`);
+                    closeEditUserModal();
+                    loadUsersData();
+                } else {
+                    errorDiv.innerText = result.error || 'Ошибка при редактировании пользователя';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Ошибка соединения с сервером';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.innerText = 'Сохранить';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Управление ссылками доступа
+        function openShareLinkModal() {
+            document.getElementById('shareLinkModal').classList.remove('hidden');
+            document.getElementById('shareDescription').value = '';
+            document.getElementById('generatedLinkContainer').classList.add('hidden');
+            loadShareLinks();
+        }
+
+        function closeShareLinkModal() {
+            document.getElementById('shareLinkModal').classList.add('hidden');
+        }
+
+        async function loadShareLinks() {
+            const tbody = document.getElementById('shareLinksListBody');
+            try {
+                const res = await fetch('./api/share_links');
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-2 style="color:var(--text-muted);">Ошибка загрузки</td></tr>`;
+                    return;
+                }
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-2" style="color:var(--text-muted);">Активных ссылок нет</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    const expDate = new Date(item.expires_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    
+                    tr.innerHTML = `
+                        <td>
+                            <div style="font-weight:600; color:white;">${item.description || 'Без описания'}</div>
+                            <div class="font-mono" style="font-size:10px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; max-width:250px;">
+                                <a href="${item.share_url}" target="_blank" style="color:var(--accent-hover); text-decoration:none;">${item.share_url}</a>
+                            </div>
+                        </td>
+                        <td>${expDate}</td>
+                        <td class="text-right">
+                            <button class="btn-action-revoke" style="padding: 4px 8px; font-size:11px;" onclick="revokeShareLink('${item.token}')">Отозвать</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-2 text-danger">Ошибка сети</td></tr>`;
+            }
+        }
+
+        async function handleCreateShareLink(event) {
+            event.preventDefault();
+            const description = document.getElementById('shareDescription').value.trim();
+            const days = document.getElementById('shareDays').value;
+            const submitBtn = document.getElementById('createShareLinkBtn');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Создание...';
+            
+            try {
+                const res = await fetch('./api/share_links/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description, days })
+                });
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showToast('Ссылка успешно создана!');
+                    document.getElementById('generatedLinkUrl').value = data.share_url;
+                    document.getElementById('generatedLinkContainer').classList.remove('hidden');
+                    document.getElementById('shareDescription').value = '';
+                    loadShareLinks();
+                } else {
+                    showToast(data.error || 'Ошибка при создании ссылки', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка соединения с сервером', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Создать ссылку';
+            }
+        }
+
+        async function revokeShareLink(token) {
+            if (!confirm('Вы действительно хотите отозвать эту ссылку? Доступ по ней будет мгновенно закрыт.')) return;
+            
+            try {
+                const res = await fetch('./api/share_links/revoke', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                
+                if (res.ok) {
+                    showToast('Ссылка успешно отозвана');
+                    loadShareLinks();
+                } else {
+                    showToast('Не удалось отозвать ссылку', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        function copyGeneratedLink() {
+            const urlInput = document.getElementById('generatedLinkUrl');
+            urlInput.select();
+            document.execCommand('copy');
+            showToast('Ссылка скопирована в буфер обмена!');
+        }
+
+        // Инициализация при загрузке
+        window.addEventListener('load', () => {
+            loadStatus();
+            loadMatrixData();
+        });
+    </script>
+</body>
+</html>

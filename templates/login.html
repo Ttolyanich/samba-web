@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samba Web Panel — Вход</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+
+    <div class="login-wrapper">
+        <div class="login-card glass">
+            <div class="login-header">
+                <div class="logo-box big">S</div>
+                <h2>SAMBA <span class="accent-text">PANEL</span></h2>
+                <p>Вход в систему управления доступом</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <input type="text" id="username" autocomplete="username" placeholder="Введите имя пользователя" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" autocomplete="current-password" placeholder="Введите пароль" required>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="btn-submit wide">Войти</button>
+            </form>
+            
+            <div id="errorMessage" class="error-msg text-center" style="display: none; margin-top: 16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            errorDiv.style.display = 'none';
+            submitBtn.innerText = 'Вход...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`./login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = `./`;
+                } else {
+                    errorDiv.innerText = result.error || 'Ошибка входа';
+                    errorDiv.style.display = 'block';
+                    submitBtn.innerText = 'Войти';
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Ошибка соединения с сервером';
+                errorDiv.style.display = 'block';
+                submitBtn.innerText = 'Войти';
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

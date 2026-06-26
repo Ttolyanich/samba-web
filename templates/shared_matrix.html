@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчет о правах доступа Samba</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Тема оформления (совпадает с Crimson Red) */
+        :root {
+            --bg-main: #0a0a0c;
+            --bg-card: #121216;
+            --border-color: rgba(227, 71, 74, 0.12);
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --accent: #c52f31;
+            --accent-hover: #e3474a;
+            
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding: 40px 24px;
+            min-height: 100vh;
+        }
+
+        .report-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Заголовок отчета */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .report-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .report-title p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .meta-info {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .meta-info strong {
+            color: var(--text-main);
+        }
+
+        /* Кнопка печати */
+        .btn-print {
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(197, 47, 49, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-print:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+
+        /* Кнопка Excel */
+        .btn-excel {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-excel:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+
+        /* Таблица матрицы */
+        .table-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .matrix-table th {
+            padding: 16px 20px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(0, 0, 0, 0.15);
+            white-space: nowrap;
+        }
+
+        .matrix-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        /* Поведение строк таблицы при ховере */
+        .matrix-table tbody tr:hover td {
+            background-color: rgba(255, 255, 255, 0.008);
+        }
+
+        /* Данные папки */
+        .share-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 250px;
+        }
+
+        .share-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .share-path {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Данные пользователя */
+        .user-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 110px;
+        }
+
+        .user-header-fullname {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-header-username {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Статические бейджи прав */
+        .perm-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .perm-badge.rw {
+            background-color: rgba(197, 47, 49, 0.15);
+            color: var(--accent-hover);
+            border: 1px solid rgba(197, 47, 49, 0.25);
+        }
+
+        .perm-badge.ro {
+            background-color: rgba(251, 191, 36, 0.08);
+            color: var(--warning);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .perm-badge.none {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .text-muted-italic {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 12px;
+        }
+
+        @page {
+            size: landscape;
+            margin: 10mm;
+        }
+
+        /* Стили для печати (при экспорте в PDF/Печати делаем отчет на белом фоне) */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+
+            .btn-print {
+                display: none !important;
+            }
+
+            .table-card, .table-wrapper {
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                width: 100% !important;
+            }
+
+            .matrix-table {
+                width: 100% !important;
+                table-layout: auto !important;
+                border: 1px solid #ddd !important;
+            }
+
+            .matrix-table th {
+                background-color: #f5f5f5 !important;
+                color: #333 !important;
+                border-bottom: 2px solid #ccc !important;
+                padding: 6px 8px !important;
+                font-size: 10px !important;
+                white-space: normal !important;
+            }
+
+            .matrix-table td {
+                border-bottom: 1px solid #eee !important;
+                padding: 6px 8px !important;
+                font-size: 10px !important;
+            }
+
+            .share-name {
+                color: black !important;
+                font-size: 11px !important;
+            }
+
+            .share-path {
+                color: #666 !important;
+                font-size: 9px !important;
+            }
+
+            .user-header-fullname {
+                color: black !important;
+                font-size: 10px !important;
+                white-space: normal !important;
+                max-width: 90px !important;
+                word-wrap: break-word !important;
+            }
+
+            .user-header-username {
+                color: #666 !important;
+                font-size: 9px !important;
+            }
+
+            .report-title p, .meta-info {
+                color: #666 !important;
+            }
+
+            .meta-info {
+                background: white !important;
+                border: 1px solid #ddd !important;
+            }
+
+            .meta-info strong {
+                color: black !important;
+            }
+
+            .perm-badge {
+                border: 1px solid #ccc !important;
+                background: transparent !important;
+                padding: 2px 6px !important;
+                font-size: 9px !important;
+            }
+
+            .perm-badge.rw {
+                color: #c52f31 !important;
+                border-color: #c52f31 !important;
+            }
+
+            .perm-badge.ro {
+                color: #b45309 !important;
+                border-color: #fbbf24 !important;
+            }
+
+            .perm-badge.none {
+                color: #aaa !important;
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="report-container">
+        
+        <div class="report-header">
+            <div class="report-title">
+                <h1>Отчет о правах доступа Samba</h1>
+                <p>Экспорт прав доступа сотрудников к сетевым каталогам</p>
+                <div style="margin-top: 16px;">
+                    <button class="btn-excel" onclick="downloadExcel()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Скачать в Excel
+                    </button>
+                </div>
+            </div>
+            
+            <div class="meta-info">
+                <p>Описание: <strong>{{ description or 'Не указано' }}</strong></p>
+                <p>Создан: <strong id="createdAtVal">...</strong></p>
+                <p>Действителен до: <strong id="expiresAtVal">...</strong></p>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-wrapper">
+                <table class="matrix-table" id="matrixTable">
+                    <thead>
+                        <tr id="matrixHeader">
+                            <th>Общая папка / Путь</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrixBody">
+                        <tr><td colspan="100%" style="text-align: center; padding: 24px; color: var(--text-muted);">Загрузка отчета...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const TOKEN = "{{ token }}";
+        const EXPIRES_AT = "{{ expires_at }}";
+        
+        function downloadExcel() {
+            window.location.href = `/api/shared/matrix/${TOKEN}/export`;
+        }
+        
+        // Форматирование дат
+        function formatISO(isoStr) {
+            if (!isoStr) return '—';
+            try {
+                const date = new Date(isoStr);
+                return date.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch(e) {
+                return isoStr;
+            }
+        }
+
+        document.getElementById('expiresAtVal').innerText = formatISO(EXPIRES_AT);
+        
+        // Получаем дату создания по токену (приблизительно, текущая дата минус срок)
+        // Но лучше вывести текущую дату просмотра
+        document.getElementById('createdAtVal').innerText = new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        async function loadReportData() {
+            const tbody = document.getElementById('matrixBody');
+            const header = document.getElementById('matrixHeader');
+            
+            try {
+                const res = await fetch(`/api/shared/matrix/${TOKEN}`);
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    tbody.innerHTML = `<tr><td colspan="100%" style="text-align: center; padding: 24px; color: var(--danger);">Ошибка: ${data.error}</td></tr>`;
+                    return;
+                }
+
+                const shares = data.shares;
+                const users = data.users;
+                const matrix = data.matrix;
+
+                // Сортировка по имени
+                users.sort((a, b) => {
+                    const nameA = (a.full_name || a.username).toLowerCase();
+                    const nameB = (b.full_name || b.username).toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+
+                // Строим заголовки
+                header.innerHTML = '<th>Общая папка / Путь</th>';
+                const activeUsers = users.filter(u => !u.disabled);
+                
+                activeUsers.forEach(user => {
+                    const th = document.createElement('th');
+                    th.innerHTML = `
+                        <div class="user-header-info">
+                            <span class="user-header-fullname">${user.full_name || '—'}</span>
+                            <span class="user-header-username">${user.username}</span>
+                        </div>
+                    `;
+                    header.appendChild(th);
+                });
+
+                // Строим строки
+                tbody.innerHTML = '';
+                shares.forEach(share => {
+                    const tr = document.createElement('tr');
+                    
+                    // Шара
+                    const tdShare = document.createElement('td');
+                    tdShare.innerHTML = `
+                        <div class="share-info">
+                            <span class="share-name">${share.name}</span>
+                            <span class="share-path">${share.path}</span>
+                        </div>
+                    `;
+                    tr.appendChild(tdShare);
+
+                    // Права
+                    activeUsers.forEach(user => {
+                        const tdPerm = document.createElement('td');
+                        const currentAccess = (matrix[user.username] && matrix[user.username][share.name]) || 'none';
+                        const isConfigured = share.rw_group || share.ro_group;
+
+                        if (!isConfigured) {
+                            tdPerm.innerHTML = `<span class="text-muted-italic">Без ограничений</span>`;
+                        } else {
+                            if (currentAccess === 'rw') {
+                                tdPerm.innerHTML = `<span class="perm-badge rw">RW</span>`;
+                            } else if (currentAccess === 'ro') {
+                                tdPerm.innerHTML = `<span class="perm-badge ro">RO</span>`;
+                            } else {
+                                tdPerm.innerHTML = `<span class="perm-badge none">—</span>`;
+                            }
+                        }
+                        tr.appendChild(tdPerm);
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="100%" style="text-align: center; padding: 24px; color: var(--danger);">Не удалось загрузить данные отчета</td></tr>`;
+            }
+        }
+
+        window.addEventListener('load', loadReportData);
+    </script>
+</body>
+</html>
