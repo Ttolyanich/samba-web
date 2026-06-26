@@ -82,7 +82,7 @@
 1. **Клонирование репозитория и создание сервисного аккаунта**:
    Склонируйте репозиторий в каталог `/opt/samba-web`:
    ```bash
-   sudo git clone git@github.com:<YOUR_GITHUB_USERNAME>/samba-web.git /opt/samba-web
+   sudo git clone git@github.com:Ttolyanich/openvpn-web.git /opt/samba-web
    ```
    Создайте выделенного системного пользователя `samba-web` без пароля и домашней папки:
    ```bash
