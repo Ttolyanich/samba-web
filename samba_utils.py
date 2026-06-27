@@ -386,8 +386,9 @@ def get_directory_acl_groups(dir_path):
 
 def discover_acl_resources(smb_conf_path, max_depth=3):
     """
-    Сканирует корневые директории общих ресурсов Samba и находит вложенные папки с ACL.
-    Использует sudo find для безопасного обхода с любыми правами доступа.
+    Сканирует корневые директории общих ресурсов Samba и находит вложенные папки,
+    которые имеют отличающиеся группы доступа (границы безопасности).
+    Использует оптимизированный вызов sudo find -printf для максимальной скорости.
     """
     shares = parse_smb_conf(smb_conf_path)
     resources = []
@@ -446,6 +447,20 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
             mock_resources[i]["has_children"] = has_child
         return mock_resources
 
+    import grp
+    # Кэшируем существование RO групп в ОС, чтобы не делать grp.getgrnam в цикле
+    _group_cache = {}
+    def check_ro_group_exists(ro_name):
+        if ro_name in _group_cache:
+            return _group_cache[ro_name]
+        try:
+            grp.getgrnam(ro_name)
+            _group_cache[ro_name] = True
+            return True
+        except KeyError:
+            _group_cache[ro_name] = False
+            return False
+
     for share in shares:
         share_path = share["path"]
         if not share_path or not os.path.exists(share_path):
@@ -466,51 +481,81 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
             "rw_group": rw_grp,
             "ro_group": ro_grp
         }
-        resources.append(root_resource)
         
-        # Сканируем подкаталоги через sudo find
+        # Добавляем корневую шару как первый включенный ресурс
+        share_resources = [root_resource]
+        
+        # Сканируем подкаталоги через sudo find -printf
         try:
-            cmd = ["sudo", "find", share_path, "-mindepth", "1", "-maxdepth", str(max_depth), "-type", "d"]
+            cmd = ["sudo", "find", share_path, "-mindepth", "1", "-maxdepth", str(max_depth), "-type", "d", "-printf", "%p|%g\n"]
             res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            paths = sorted(res.stdout.splitlines())
+            find_lines = res.stdout.splitlines()
         except Exception as e:
             print(f"Error running sudo find on {share_path}: {e}")
-            paths = []
+            find_lines = []
             
-        for path in paths:
-            path = path.strip()
-            if not path:
+        # Сортируем пути по длине / алфавиту для правильного порядка обхода (depth-first)
+        find_lines = sorted(find_lines)
+        
+        for line in find_lines:
+            line = line.strip()
+            if not line or "|" not in line:
                 continue
                 
+            path, group_name = line.split("|", 1)
+            
             rel_path = os.path.relpath(path, share_path)
             parts = rel_path.split(os.sep)
             
-            # Пропускаем скрытые папки (начинающиеся с точки)
+            # Пропускаем скрытые папки
             if any(p.startswith('.') for p in parts):
                 continue
                 
-            rw, ro = get_directory_acl_groups(path)
+            # Проверяем группу владельца
+            if not group_name.startswith("G-"):
+                # Попробуем прочитать через getfacl, если Unix-группа не начинается с G-
+                rw, ro = get_directory_acl_groups(path)
+            else:
+                rw = group_name
+                ro = f"{group_name}-r" if check_ro_group_exists(f"{group_name}-r") else ""
+                
             if rw or ro:
-                display_name = parts[-1]
-                depth = len(parts)
-                
-                if depth == 1:
-                    parent = share["name"]
-                else:
-                    parent = f"{share['name']} / " + " / ".join(parts[:-1])
+                # Ищем ближайшего включенного предка
+                parent_path = os.path.dirname(path)
+                ancestor = None
+                while len(parent_path) >= len(share_path):
+                    match = next((r for r in share_resources if r["path"] == parent_path), None)
+                    if match:
+                        ancestor = match
+                        break
+                    parent_path = os.path.dirname(parent_path)
                     
-                res_name = f"{parent} / {display_name}"
+                if not ancestor:
+                    ancestor = root_resource
+                    
+                # Сравниваем группы с ближайшим включенным предком
+                if rw == ancestor["rw_group"] and ro == ancestor["ro_group"]:
+                    # Группы идентичны предку, пропускаем эту директорию!
+                    continue
+                    
+                # Если группы отличаются, то это отдельный ресурс управления доступом!
+                display_name = parts[-1]
+                visual_depth = ancestor["depth"] + 1
                 
-                resources.append({
+                res_name = f"{ancestor['name']} / {display_name}"
+                
+                share_resources.append({
                     "name": res_name,
                     "display_name": display_name,
                     "path": path,
-                    "depth": depth,
-                    "parent": parent,
+                    "depth": visual_depth,
+                    "parent": ancestor["name"],
                     "rw_group": rw,
                     "ro_group": ro
                 })
                 
+        resources.extend(share_resources)
+        
     for i, res in enumerate(resources):
         has_child = any(other["parent"] == res["name"] for other in resources)
         resources[i]["has_children"] = has_child
