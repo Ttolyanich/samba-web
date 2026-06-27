@@ -6,6 +6,13 @@
     <title>Отчет о правах доступа Samba</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Немедленно применяем сохраненную тему до отрисовки интерфейса
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
     <style>
         /* Тема оформления (совпадает с Crimson Red) */
         :root {
@@ -20,6 +27,18 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #fbbf24;
+        }
+
+        /* Светлая тема */
+        .light-theme {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: rgba(197, 47, 49, 0.15);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            
+            --accent: #c52f31;
+            --accent-hover: #a81e20;
         }
 
         * {
@@ -431,6 +450,70 @@
             background-color: var(--border-color);
             opacity: 0.3;
         }
+
+        /* Специфичные перегрузки для светлой темы */
+        .light-theme body {
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(197, 47, 49, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.02) 0%, transparent 40%);
+        }
+
+        .light-theme .share-name,
+        .light-theme .share-name-tree,
+        .light-theme .user-header-fullname {
+            color: #0f172a;
+        }
+
+        .light-theme .matrix-table th {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .light-theme .matrix-table th:first-child {
+            background-color: #f1f5f9;
+        }
+
+        .light-theme .matrix-table tbody tr:hover td:first-child {
+            background-color: #f8fafc !important;
+        }
+
+        .light-theme .meta-info {
+            background-color: #ffffff;
+        }
+
+        .light-theme .table-card {
+            background-color: #ffffff;
+        }
+
+        .light-theme .btn-icon-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        /* Кнопка-иконка переключения темы */
+        .btn-icon-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .btn-icon-toggle:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.04);
+            border-color: var(--border-hover);
+        }
+
+        .btn-icon-toggle svg {
+            width: 18px;
+            height: 18px;
+        }
     </style>
 </head>
 <body>
@@ -441,10 +524,16 @@
             <div class="report-title">
                 <h1>Отчет о правах доступа Samba</h1>
                 <p>Экспорт прав доступа сотрудников к сетевым каталогам</p>
-                <div style="margin-top: 16px;">
+                <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
                     <button class="btn-excel" onclick="downloadExcel()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         Скачать в Excel
+                    </button>
+                    <button id="theme-toggle" class="btn-icon-toggle" title="Переключить тему">
+                        <!-- Sun Icon (shown in dark theme) -->
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <!-- Moon Icon (shown in light theme) -->
+                        <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     </button>
                 </div>
             </div>
@@ -635,7 +724,33 @@
             });
         }
 
-        window.addEventListener('load', loadReportData);
+        window.addEventListener('load', () => {
+            loadReportData();
+
+            // Инициализация переключателя темы
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const sunIcon = themeToggleBtn.querySelector('.sun-icon');
+            const moonIcon = themeToggleBtn.querySelector('.moon-icon');
+
+            if (document.documentElement.classList.contains('light-theme')) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('light-theme');
+                const isLight = document.documentElement.classList.contains('light-theme');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                
+                if (isLight) {
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+            });
+        });
     </script>
 </body>
 </html>

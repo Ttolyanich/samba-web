@@ -19,6 +19,24 @@
     --warning-glow: rgba(245, 158, 11, 0.15);
 }
 
+/* Светлая тема */
+.light-theme {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-offset: #f1f5f9;
+    --border-color: rgba(197, 47, 49, 0.15);
+    --border-hover: rgba(197, 47, 49, 0.4);
+    
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    
+    --accent: #c52f31;
+    --accent-hover: #a81e20;
+    --accent-glow: rgba(197, 47, 49, 0.15);
+    
+    --warning-glow: rgba(245, 158, 11, 0.2);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -1009,4 +1027,104 @@ body {
     background-color: var(--border-color);
     opacity: 0.3;
 }
+
+/* Специфичные перегрузки для светлой темы */
+.light-theme body {
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(197, 47, 49, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.02) 0%, transparent 40%);
+}
+
+.light-theme .brand-title,
+.light-theme .share-name,
+.light-theme .share-name-tree,
+.light-theme .user-header-fullname {
+    color: #0f172a;
+}
+
+.light-theme .matrix-table th {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .matrix-table th:first-child {
+    background-color: #f1f5f9;
+}
+
+.light-theme .matrix-table tbody tr:hover td:first-child {
+    background-color: #f8fafc !important;
+}
+
+.light-theme .matrix-control {
+    background-color: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.light-theme .matrix-btn:hover {
+    color: var(--text-main);
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .matrix-btn.none.active {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.light-theme .search-wrapper input,
+.light-theme .form-select {
+    background-color: rgba(0, 0, 0, 0.02);
+    color: #0f172a;
+}
+
+.light-theme .modal-card,
+.light-theme .toast {
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .btn-icon-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.light-theme .navbar {
+    background-color: rgba(255, 255, 255, 0.85);
+}
+
+.light-theme .btn-action-reset {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .tab-btn:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.light-theme .data-table th {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Кнопка-иконка переключения темы */
+.btn-icon-toggle {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.btn-icon-toggle:hover {
+    color: var(--text-main);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-hover);
+}
+
+.btn-icon-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
 
