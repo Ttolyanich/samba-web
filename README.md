@@ -76,6 +76,8 @@
   - `/usr/bin/gpasswd`
   - `/usr/bin/getfacl`
   - `/usr/bin/find`
+  - `/usr/bin/smbstatus`
+  - `/usr/bin/kill`
 
 ---
 
@@ -102,9 +104,9 @@
    ```
 
 3. **Настройка прав `sudo`**:
-   Для того чтобы панель, работающая под ограниченным сервисным пользователем `samba-web`, могла получать права доступа из ACL директорий и управлять системными учетными записями Samba, добавьте в `/etc/sudoers.d/samba-web` следующие права:
+   Для того чтобы панель, работающая под ограниченным сервисным пользователем `samba-web`, могла получать права доступа из ACL директорий, управлять системными учетными записями Samba и сбрасывать активные сессии пользователей, добавьте в `/etc/sudoers.d/samba-web` следующие права:
    ```text
-   samba-web ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd, /usr/bin/getfacl, /usr/bin/find
+   samba-web ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd, /usr/bin/getfacl, /usr/bin/find, /usr/bin/smbstatus, /usr/bin/kill
    ```
 
 4. **Конфигурация приложения**:
