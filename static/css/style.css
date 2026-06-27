@@ -401,9 +401,11 @@ body {
 
 .header-title.uppercase-accent {
     text-transform: uppercase;
-    color: var(--accent-hover);
     font-size: 16px;
     letter-spacing: 0.5px;
+    background: linear-gradient(to right, var(--accent-hover), #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .header-title.uppercase-muted {
@@ -1191,6 +1193,13 @@ body {
 .light-theme .login-header h2 {
     color: #0f172a;
 }
+
+.light-theme .header-title.uppercase-accent {
+    background: linear-gradient(to right, var(--accent), #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 
 
 
