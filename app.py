@@ -103,6 +103,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.context_processor
+def inject_hostname():
+    import socket
+    return {"hostname": socket.gethostname()}
+
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
     if session.get("logged_in"):
