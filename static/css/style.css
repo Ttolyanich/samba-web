@@ -145,7 +145,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 12px 16px;
-    color: white;
+    color: var(--text-main);
     font-size: 14px;
     transition: all 0.2s ease;
 }
@@ -1126,5 +1126,16 @@ body {
     width: 18px;
     height: 18px;
 }
+
+.light-theme .glass {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(197, 47, 49, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(197, 47, 49, 0.08);
+}
+
+.light-theme .login-header h2 {
+    color: #0f172a;
+}
+
 
 
