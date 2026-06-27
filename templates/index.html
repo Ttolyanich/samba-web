@@ -628,6 +628,7 @@
                 
                 const resetBtn = `<button class="btn-action-reset" onclick="openResetPasswordModal('${user.username}')">Сбросить пароль</button>`;
                 const editBtn = `<button class="btn-action-reset" onclick="openEditUserModal('${user.username}', '${user.full_name || ''}')">Редактировать</button>`;
+                const resetSessionsBtn = `<button class="btn-action-reset" style="border-color: rgba(251, 191, 36, 0.3); color: var(--warning);" onclick="handleResetUserSessions('${user.username}')">Сбросить сессии</button>`;
 
                 tr.innerHTML = `
                     <td class="font-mono"><strong>${user.username}</strong></td>
@@ -637,6 +638,7 @@
                         <div class="actions-group">
                             ${editBtn}
                             ${resetBtn}
+                            ${resetSessionsBtn}
                             ${blockBtn}
                         </div>
                     </td>
@@ -706,6 +708,28 @@
                 pass += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             document.getElementById(inputId).value = pass;
+        }
+
+        async function handleResetUserSessions(username) {
+            if (!confirm(`Вы действительно хотите сбросить все активные сетевые подключения (SMB сессии) для пользователя ${username}? Это временно прервет его работу с папками, но заставит Windows применить новые права доступа.`)) return;
+            
+            try {
+                const res = await fetch('./api/users/reset-sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    showToast(result.message || 'Сессии пользователя успешно сброшены');
+                } else {
+                    showToast(result.error || 'Не удалось сбросить сессии', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+            }
         }
 
         // Создание пользователя Samba

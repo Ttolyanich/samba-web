@@ -679,3 +679,49 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
         
     return resources
 
+def reset_user_samba_sessions(username):
+    """
+    Находит все активные процессы smbd для данного пользователя через smbstatus
+    и завершает их (kill), заставляя Windows-клиент пересоздать сессию с новыми правами.
+    """
+    pids = []
+    try:
+        # Запускаем smbstatus -p для получения списка процессов
+        res = subprocess.run(["sudo", "smbstatus", "-p"], capture_output=True, text=True, check=True)
+        lines = res.stdout.splitlines()
+        
+        # Парсим вывод
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("Samba version") or line.startswith("PID") or line.startswith("---"):
+                continue
+            
+            parts = line.split()
+            if len(parts) >= 2:
+                pid = parts[0]
+                user = parts[1]
+                if user == username:
+                    pids.append(pid)
+    except Exception as e:
+        print(f"Error running smbstatus: {e}")
+        return False, f"Ошибка получения статуса Samba: {e}"
+
+    if not pids:
+        return True, "Активных сессий пользователя не найдено (сброс не требуется)"
+
+    # Завершаем процессы
+    killed_count = 0
+    errors = []
+    for pid in pids:
+        try:
+            subprocess.run(["sudo", "kill", pid], check=True)
+            killed_count += 1
+        except Exception as e:
+            errors.append(f"PID {pid}: {e}")
+
+    if errors:
+        return False, f"Сброшено сессий: {killed_count}. Ошибки: {', '.join(errors)}"
+    
+    return True, f"Успешно сброшено активных сессий: {killed_count}"
+
+

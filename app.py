@@ -16,7 +16,8 @@ from samba_utils import (
     block_samba_user,
     unblock_samba_user,
     reset_samba_password,
-    rename_samba_user
+    rename_samba_user,
+    reset_user_samba_sessions
 )
 
 # Загрузка конфигурации
@@ -507,6 +508,26 @@ def api_users_toggle_block():
         return jsonify({"success": True})
     else:
         return jsonify({"error": f"Не удалось выполнить действие: {action_text}"}), 500
+
+@app.route('/api/users/reset-sessions', methods=['POST'])
+@login_required
+def api_users_reset_sessions():
+    data = request.json or {}
+    username = data.get("username", "").strip()
+    
+    if not username:
+        return jsonify({"error": "Имя пользователя обязательно"}), 400
+        
+    success, msg = reset_user_samba_sessions(username)
+    if success:
+        log_action(
+            session["username"],
+            "RESET_SESSIONS",
+            f"Сброшены активные сессии пользователя Samba: {username} ({msg})"
+        )
+        return jsonify({"success": True, "message": msg})
+    else:
+        return jsonify({"error": msg}), 500
 
 @app.route('/api/audit_logs')
 @login_required
