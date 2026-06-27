@@ -146,6 +146,7 @@ body {
     border-radius: 8px;
     padding: 12px 16px;
     color: var(--text-main);
+    caret-color: var(--text-main);
     font-size: 14px;
     transition: all 0.2s ease;
 }
@@ -1068,10 +1069,19 @@ body {
     background-color: rgba(0, 0, 0, 0.06);
 }
 
+.light-theme .form-group input,
+.light-theme .input-wrapper input,
 .light-theme .search-wrapper input,
 .light-theme .form-select {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: #f1f5f9;
     color: #0f172a;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.light-theme .form-group input::placeholder,
+.light-theme .input-wrapper input::placeholder,
+.light-theme .search-wrapper input::placeholder {
+    color: #94a3b8;
 }
 
 .light-theme .modal-card,
