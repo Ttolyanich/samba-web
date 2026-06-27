@@ -166,7 +166,7 @@ body {
 }
 
 .accent-text {
-    background: linear-gradient(to right, var(--accent-hover), #f87171);
+    background: linear-gradient(to right, var(--accent-hover), #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1199,6 +1199,13 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
+
+.light-theme .accent-text {
+    background: linear-gradient(to right, var(--accent), #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 
 
 
