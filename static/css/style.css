@@ -406,6 +406,7 @@ body {
     background: linear-gradient(to right, var(--accent-hover), #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    width: fit-content;
 }
 
 .header-title.uppercase-muted {
