@@ -394,6 +394,25 @@ body {
     background-color: rgba(255, 255, 255, 0.008);
 }
 
+/* Закрепление первого столбца матрицы (Общая папка / Путь) */
+.matrix-table th:first-child,
+.matrix-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: var(--bg-card); /* Сплошной фон, чтобы имена пользователей не просвечивали */
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.35); /* Красивая тень справа */
+}
+
+.matrix-table th:first-child {
+    background-color: #16161c; /* Чуть более темный оттенок для заголовка */
+    z-index: 11; /* Выше ячеек тела таблицы, чтобы заголовки не перекрывались */
+}
+
+.matrix-table tbody tr:hover td:first-child {
+    background-color: #17171d !important; /* Подсветка при ховере */
+}
+
 /* Инфо папки */
 .share-info {
     display: flex;
