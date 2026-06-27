@@ -39,6 +39,7 @@ def parse_smb_conf(conf_path):
                     "valid_users": [],
                     "write_list": [],
                     "read_list": [],
+                    "vfs_objects": "",
                     "rw_group": "",
                     "ro_group": ""
                 }
@@ -57,6 +58,8 @@ def parse_smb_conf(conf_path):
                 current_share['write_list'] = [u.strip() for u in val.split(',') if u.strip()]
             elif key == 'read list':
                 current_share['read_list'] = [u.strip() for u in val.split(',') if u.strip()]
+            elif key == 'vfs objects':
+                current_share['vfs_objects'] = val
 
     # Вытаскиваем RW и RO группы для каждой шары
     for share in shares:
