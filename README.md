@@ -1,5 +1,7 @@
 # Samba Web Management Panel
 
+<img width="1416" height="680" alt="image" src="https://github.com/user-attachments/assets/17baeb42-19fd-443e-aeb4-d5bc1a39d4b3" />
+
 > [!IMPORTANT]
 > **Внимание!** Данная панель является нодой и **не работает автономно**. Для её функционирования (аутентификации операторов) требуется предварительно развернутый сервер авторизации [Centralized Authentication Server](https://github.com/Ttolyanich/centralized-auth).
 
