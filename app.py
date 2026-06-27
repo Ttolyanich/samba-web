@@ -124,11 +124,17 @@ def login_page():
         # Запрос к Central Auth Server
         central_url = f"{config['central_auth_url'].rstrip('/')}/api/auth/verify"
         try:
+            verify_ssl = config.get("verify_ssl", True)
+            if not verify_ssl:
+                import urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
             resp = requests.post(
                 central_url,
                 json={"username": username, "password": password},
                 headers={"X-Node-Token": config["node_api_token"]},
-                timeout=5
+                timeout=5,
+                verify=verify_ssl
             )
             if resp.status_code == 200:
                 res_data = resp.json()
