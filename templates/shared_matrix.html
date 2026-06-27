@@ -346,6 +346,72 @@
                 border: none !important;
             }
         }
+
+        /* Tree layout for folder columns */
+        .share-info-tree {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+
+        .tree-toggle {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            margin-right: 6px;
+            color: var(--accent-hover);
+            user-select: none;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+        }
+
+        .tree-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .tree-toggle.collapsed svg {
+            transform: rotate(-90deg);
+        }
+
+        .tree-toggle svg {
+            transition: transform 0.2s ease;
+            width: 14px;
+            height: 14px;
+        }
+
+        .tree-toggle-spacer {
+            display: inline-block;
+            width: 26px;
+        }
+
+        .share-name-tree {
+            font-weight: 500;
+            color: white;
+            font-size: 13px;
+        }
+
+        .share-path-tree {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: monospace;
+            margin-left: 8px;
+            opacity: 0.7;
+        }
+
+        .tree-indent-line {
+            position: absolute;
+            top: -14px;
+            bottom: -14px;
+            width: 1px;
+            background-color: var(--border-color);
+            opacity: 0.3;
+        }
     </style>
 </head>
 <body>
@@ -392,6 +458,11 @@
         const TOKEN = "{{ token }}";
         const EXPIRES_AT = "{{ expires_at }}";
         
+        let sharesData = [];
+        let usersData = [];
+        let matrixData = {};
+        let collapsedState = {};
+
         function downloadExcel() {
             window.location.href = `/api/shared/matrix/${TOKEN}/export`;
         }
@@ -408,15 +479,29 @@
         }
 
         document.getElementById('expiresAtVal').innerText = formatISO(EXPIRES_AT);
-        
-        // Получаем дату создания по токену (приблизительно, текущая дата минус срок)
-        // Но лучше вывести текущую дату просмотра
         document.getElementById('createdAtVal').innerText = new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        // Переключение сворачивания папки
+        window.toggleFolder = function(shareName, event) {
+            if (event) event.stopPropagation();
+            collapsedState[shareName] = !collapsedState[shareName];
+            renderReportTable();
+        };
+
+        function isShareHidden(share) {
+            let parent = share.parent;
+            while (parent) {
+                if (collapsedState[parent]) {
+                    return true;
+                }
+                const parentObj = sharesData.find(s => s.name === parent);
+                parent = parentObj ? parentObj.parent : null;
+            }
+            return false;
+        }
 
         async function loadReportData() {
             const tbody = document.getElementById('matrixBody');
-            const header = document.getElementById('matrixHeader');
-            
             try {
                 const res = await fetch(`/api/shared/matrix/${TOKEN}`);
                 const data = await res.json();
@@ -426,73 +511,109 @@
                     return;
                 }
 
-                const shares = data.shares;
-                const users = data.users;
-                const matrix = data.matrix;
+                sharesData = data.shares;
+                usersData = data.users;
+                matrixData = data.matrix;
 
                 // Сортировка по имени
-                users.sort((a, b) => {
+                usersData.sort((a, b) => {
                     const nameA = (a.full_name || a.username).toLowerCase();
                     const nameB = (b.full_name || b.username).toLowerCase();
                     return nameA.localeCompare(nameB);
                 });
 
-                // Строим заголовки
-                header.innerHTML = '<th>Общая папка / Путь</th>';
-                const activeUsers = users.filter(u => !u.disabled);
-                
-                activeUsers.forEach(user => {
-                    const th = document.createElement('th');
-                    th.innerHTML = `
-                        <div class="user-header-info">
-                            <span class="user-header-fullname">${user.full_name || '—'}</span>
-                            <span class="user-header-username">${user.username}</span>
-                        </div>
-                    `;
-                    header.appendChild(th);
-                });
-
-                // Строим строки
-                tbody.innerHTML = '';
-                shares.forEach(share => {
-                    const tr = document.createElement('tr');
-                    
-                    // Шара
-                    const tdShare = document.createElement('td');
-                    tdShare.innerHTML = `
-                        <div class="share-info">
-                            <span class="share-name">${share.name}</span>
-                            <span class="share-path">${share.path}</span>
-                        </div>
-                    `;
-                    tr.appendChild(tdShare);
-
-                    // Права
-                    activeUsers.forEach(user => {
-                        const tdPerm = document.createElement('td');
-                        const currentAccess = (matrix[user.username] && matrix[user.username][share.name]) || 'none';
-                        const isConfigured = share.rw_group || share.ro_group;
-
-                        if (!isConfigured) {
-                            tdPerm.innerHTML = `<span class="text-muted-italic">Без ограничений</span>`;
-                        } else {
-                            if (currentAccess === 'rw') {
-                                tdPerm.innerHTML = `<span class="perm-badge rw">RW</span>`;
-                            } else if (currentAccess === 'ro') {
-                                tdPerm.innerHTML = `<span class="perm-badge ro">RO</span>`;
-                            } else {
-                                tdPerm.innerHTML = `<span class="perm-badge none">—</span>`;
-                            }
-                        }
-                        tr.appendChild(tdPerm);
-                    });
-
-                    tbody.appendChild(tr);
-                });
-
+                renderReportTable();
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="100%" style="text-align: center; padding: 24px; color: var(--danger);">Не удалось загрузить данные отчета</td></tr>`;
             }
+        }
+
+        function renderReportTable() {
+            const tbody = document.getElementById('matrixBody');
+            const header = document.getElementById('matrixHeader');
+            
+            // Строим заголовки
+            header.innerHTML = '<th>Общая папка / Путь</th>';
+            const activeUsers = usersData.filter(u => !u.disabled);
+            
+            activeUsers.forEach(user => {
+                const th = document.createElement('th');
+                th.innerHTML = `
+                    <div class="user-header-info">
+                        <span class="user-header-fullname">${user.full_name || '—'}</span>
+                        <span class="user-header-username">${user.username}</span>
+                    </div>
+                `;
+                header.appendChild(th);
+            });
+
+            // Строим строки
+            tbody.innerHTML = '';
+            sharesData.forEach(share => {
+                if (isShareHidden(share)) {
+                    return;
+                }
+                
+                const tr = document.createElement('tr');
+                
+                const depth = share.depth || 0;
+                const hasChildren = share.has_children;
+                const isCollapsed = collapsedState[share.name] || false;
+                
+                const tdShare = document.createElement('td');
+                
+                let toggleHtml = '';
+                if (hasChildren) {
+                    toggleHtml = `
+                        <span class="tree-toggle ${isCollapsed ? 'collapsed' : ''}" onclick="toggleFolder('${share.name}', event)">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </span>
+                    `;
+                } else {
+                    toggleHtml = '<span class="tree-toggle-spacer"></span>';
+                }
+                
+                let indentLinesHtml = '';
+                for (let i = 0; i < depth; i++) {
+                    indentLinesHtml += `<span class="tree-indent-line" style="left: ${i * 26 + 18}px;"></span>`;
+                }
+                
+                tdShare.innerHTML = `
+                    <div class="share-info-tree" style="padding-left: ${depth * 26}px;">
+                        ${indentLinesHtml}
+                        ${toggleHtml}
+                        <div>
+                            <div class="share-name-tree">${share.display_name || share.name}</div>
+                            <div class="share-path-tree">${share.path}</div>
+                        </div>
+                    </div>
+                `;
+                tr.appendChild(tdShare);
+
+                // Права
+                activeUsers.forEach(user => {
+                    const tdPerm = document.createElement('td');
+                    const currentAccess = (matrixData[user.username] && matrixData[user.username][share.name]) || 'none';
+                    const isConfigured = share.rw_group || share.ro_group;
+
+                    if (!isConfigured) {
+                        tdPerm.innerHTML = `<span class="text-muted-italic">Без ограничений</span>`;
+                    } else {
+                        if (currentAccess === 'rw') {
+                            tdPerm.innerHTML = `<span class="perm-badge rw">RW</span>`;
+                        } else if (currentAccess === 'ro') {
+                            tdPerm.innerHTML = `<span class="perm-badge ro">RO</span>`;
+                        } else {
+                            tdPerm.innerHTML = `<span class="perm-badge none">—</span>`;
+                        }
+                    }
+                    tr.appendChild(tdPerm);
+                });
+
+                tbody.appendChild(tr);
+            });
         }
 
         window.addEventListener('load', loadReportData);

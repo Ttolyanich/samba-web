@@ -307,3 +307,177 @@ def rename_samba_user(old_username, new_username, new_fullname):
     except Exception as e:
         print(f"Error migrating Samba settings for {new_username}: {e}")
         return False, f"Ошибка миграции Samba-аккаунта: {e}"
+
+def get_directory_acl_groups(dir_path):
+    """
+    Выполняет getfacl для директории и извлекает группы с правами rwx (RW) и r-x (RO).
+    На Windows возвращает заглушки на основе имени папки для локального тестирования.
+    """
+    import sys
+    if sys.platform == 'win32':
+        base_name = os.path.basename(dir_path)
+        if not base_name or base_name == '/' or base_name == 'share':
+            return "", ""
+        if base_name == "Бухгалтерия":
+            return "G-buh", "G-buh-r"
+        elif base_name == "Общая":
+            return "G-shared", "G-shared-r"
+        elif base_name == "oll":
+            return "G-oll", "G-oll-r"
+        elif base_name == "Clients":
+            return "G-oll-Clients", "G-oll-Clients-r"
+        elif base_name == "2016":
+            return "G-oll-Clients-2016", "G-oll-Clients-2016-r"
+        else:
+            clean_name = re.sub(r'[^a-zA-Z0-9_-]', '', base_name)
+            return f"G-{clean_name}", f"G-{clean_name}-r"
+
+    try:
+        res = subprocess.run(["sudo", "getfacl", "-p", "-E", dir_path], capture_output=True, text=True, check=True)
+        output = res.stdout
+    except Exception as e:
+        print(f"Error running getfacl on {dir_path}: {e}")
+        return "", ""
+
+    rw_groups = []
+    ro_groups = []
+
+    for line in output.splitlines():
+        line = line.strip()
+        if line.startswith("group:"):
+            parts = line.split(":")
+            if len(parts) >= 3:
+                group_name = parts[1]
+                perms = parts[2]
+                if not group_name:
+                    continue
+                if perms == "rwx":
+                    rw_groups.append(group_name)
+                elif perms == "r-x" or perms == "rx":
+                    ro_groups.append(group_name)
+
+    rw_group = rw_groups[0] if rw_groups else ""
+    ro_group = ro_groups[0] if ro_groups else ""
+    return rw_group, ro_group
+
+def discover_acl_resources(smb_conf_path, max_depth=3):
+    """
+    Сканирует корневые директории общих ресурсов Samba и находит вложенные папки с ACL.
+    Возвращает список ресурсов в порядке обхода в глубину (depth-first).
+    """
+    shares = parse_smb_conf(smb_conf_path)
+    resources = []
+    
+    import sys
+    if sys.platform == 'win32':
+        mock_resources = [
+            {
+                "name": "Бухгалтерия",
+                "display_name": "Бухгалтерия",
+                "path": "/share/Бухгалтерия",
+                "depth": 0,
+                "parent": None,
+                "rw_group": "G-buh",
+                "ro_group": "G-buh-r"
+            },
+            {
+                "name": "Общая",
+                "display_name": "Общая",
+                "path": "/share/Общая",
+                "depth": 0,
+                "parent": None,
+                "rw_group": "G-shared",
+                "ro_group": "G-shared-r"
+            },
+            {
+                "name": "Общая / oll",
+                "display_name": "oll",
+                "path": "/share/Общая/oll",
+                "depth": 1,
+                "parent": "Общая",
+                "rw_group": "G-oll",
+                "ro_group": "G-oll-r"
+            },
+            {
+                "name": "Общая / oll / Clients",
+                "display_name": "Clients",
+                "path": "/share/Общая/oll/Clients",
+                "depth": 2,
+                "parent": "Общая / oll",
+                "rw_group": "G-oll-Clients",
+                "ro_group": "G-oll-Clients-r"
+            },
+            {
+                "name": "Общая / oll / Clients / 2016",
+                "display_name": "2016",
+                "path": "/share/Общая/oll/Clients/2016",
+                "depth": 3,
+                "parent": "Общая / oll / Clients",
+                "rw_group": "G-oll-Clients-2016",
+                "ro_group": "G-oll-Clients-2016-r"
+            }
+        ]
+        for i, res in enumerate(mock_resources):
+            has_child = any(other["parent"] == res["name"] for other in mock_resources)
+            mock_resources[i]["has_children"] = has_child
+        return mock_resources
+
+    for share in shares:
+        share_path = share["path"]
+        if not share_path or not os.path.exists(share_path):
+            continue
+            
+        rw_grp, ro_grp = get_directory_acl_groups(share_path)
+        if not rw_grp and share.get("rw_group"):
+            rw_grp = share["rw_group"]
+        if not ro_grp and share.get("ro_group"):
+            ro_grp = share["ro_group"]
+            
+        root_resource = {
+            "name": share["name"],
+            "display_name": share["name"],
+            "path": share_path,
+            "depth": 0,
+            "parent": None,
+            "rw_group": rw_grp,
+            "ro_group": ro_grp
+        }
+        resources.append(root_resource)
+        
+        sub_resources = []
+        
+        def walk_dir(parent_path, parent_name, depth):
+            if depth > max_depth:
+                return
+            try:
+                entries = sorted(os.listdir(parent_path))
+            except Exception:
+                return
+                
+            for entry in entries:
+                full_path = os.path.join(parent_path, entry)
+                if os.path.isdir(full_path) and not entry.startswith('.'):
+                    rw, ro = get_directory_acl_groups(full_path)
+                    if rw or ro:
+                        res_name = f"{parent_name} / {entry}"
+                        res_obj = {
+                            "name": res_name,
+                            "display_name": entry,
+                            "path": full_path,
+                            "depth": depth,
+                            "parent": parent_name,
+                            "rw_group": rw,
+                            "ro_group": ro
+                        }
+                        sub_resources.append(res_obj)
+                        walk_dir(full_path, res_name, depth + 1)
+                        
+        walk_dir(share_path, share["name"], 1)
+        resources.extend(sub_resources)
+        
+    for i, res in enumerate(resources):
+        has_child = any(other["parent"] == res["name"] for other in resources)
+        resources[i]["has_children"] = has_child
+        
+    return resources
+

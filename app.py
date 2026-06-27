@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response
 from samba_utils import (
-    parse_smb_conf,
+    discover_acl_resources,
     get_samba_users,
     get_user_groups,
     add_user_to_group,
@@ -172,7 +172,7 @@ def api_status():
 @app.route('/api/matrix')
 @login_required
 def api_matrix():
-    shares = parse_smb_conf(config["smb_conf_path"])
+    shares = discover_acl_resources(config["smb_conf_path"])
     users = get_samba_users()
     
     matrix = {}
@@ -270,7 +270,9 @@ def generate_excel_matrix(shares, users):
     for share in shares:
         ws.row_dimensions[row_idx].height = 25
         
-        share_desc = f"{share['name']}\n{share['path']}"
+        indent = "    " * share.get("depth", 0)
+        disp_name = share.get("display_name", share["name"])
+        share_desc = f"{indent}{disp_name}\n{share['path']}"
         ws.cell(row=row_idx, column=1, value=share_desc)
         ws.cell(row=row_idx, column=1).font = font_bold
         ws.cell(row=row_idx, column=1).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
@@ -336,7 +338,7 @@ def generate_excel_matrix(shares, users):
 @app.route('/api/matrix/export')
 @login_required
 def api_matrix_export():
-    shares = parse_smb_conf(config["smb_conf_path"])
+    shares = discover_acl_resources(config["smb_conf_path"])
     users = get_samba_users()
     try:
         excel_data = generate_excel_matrix(shares, users)
@@ -365,7 +367,7 @@ def api_shared_matrix_export(token):
         if expires_at < datetime.now().isoformat():
             return "Срок действия ссылки истек", 403
             
-        shares = parse_smb_conf(config["smb_conf_path"])
+        shares = discover_acl_resources(config["smb_conf_path"])
         users = get_samba_users()
         
         excel_data = generate_excel_matrix(shares, users)
@@ -389,17 +391,17 @@ def api_permissions_update():
     if not username or not share_name or access not in ['rw', 'ro', 'none']:
         return jsonify({"error": "Неверные параметры запроса"}), 400
         
-    shares = parse_smb_conf(config["smb_conf_path"])
-    # Находим настройки шары
+    shares = discover_acl_resources(config["smb_conf_path"])
+    # Находим настройки папки
     share = next((s for s in shares if s["name"] == share_name), None)
     if not share:
-        return jsonify({"error": f"Общая папка '{share_name}' не найдена"}), 404
+        return jsonify({"error": f"Каталог '{share_name}' не найден"}), 404
         
     rw_grp = share["rw_group"]
     ro_grp = share["ro_group"]
     
     if not rw_grp and not ro_grp:
-        return jsonify({"error": f"Для папки '{share_name}' не заданы группы доступа в smb.conf"}), 400
+        return jsonify({"error": f"Для каталога '{share_name}' не заданы группы доступа в ACL"}), 400
         
     success = True
     errors = []
@@ -647,7 +649,7 @@ def api_shared_matrix_data(token):
         if expires_at < datetime.now().isoformat():
             return jsonify({"error": "Срок действия ссылки истек"}), 403
             
-        shares = parse_smb_conf(config["smb_conf_path"])
+        shares = discover_acl_resources(config["smb_conf_path"])
         users = get_samba_users()
         
         matrix = {}

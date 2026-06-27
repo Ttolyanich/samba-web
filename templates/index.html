@@ -304,6 +304,7 @@
         let usersData = [];
         let matrixData = {};
         let auditLogs = [];
+        let collapsedState = {};
 
         // Переключение вкладок
         function switchTab(tabId) {
@@ -393,6 +394,25 @@
             }
         }
 
+        // Переключение сворачивания папки
+        window.toggleFolder = function(shareName, event) {
+            if (event) event.stopPropagation();
+            collapsedState[shareName] = !collapsedState[shareName];
+            renderMatrixTable();
+        };
+
+        function isShareHidden(share) {
+            let parent = share.parent;
+            while (parent) {
+                if (collapsedState[parent]) {
+                    return true;
+                }
+                const parentObj = sharesData.find(s => s.name === parent);
+                parent = parentObj ? parentObj.parent : null;
+            }
+            return false;
+        }
+
         // Отрисовка таблицы матрицы
         function renderMatrixTable() {
             const header = document.getElementById('matrixHeader');
@@ -424,23 +444,53 @@
             });
 
             if (sharesData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="100%" class="text-center py-4 text-muted">В smb.conf не найдено общих папок с ограничениями по группам</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="100%" class="text-center py-4 text-muted">Не найдено папок с ограничениями доступа</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = '';
             sharesData.forEach(share => {
+                if (isShareHidden(share)) {
+                    return;
+                }
+                
                 const tr = document.createElement('tr');
                 
-                // Колонка шары
+                const depth = share.depth || 0;
+                const hasChildren = share.has_children;
+                const isCollapsed = collapsedState[share.name] || false;
+                
                 const tdShare = document.createElement('td');
+                
+                let toggleHtml = '';
+                if (hasChildren) {
+                    toggleHtml = `
+                        <span class="tree-toggle ${isCollapsed ? 'collapsed' : ''}" onclick="toggleFolder('${share.name}', event)">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </span>
+                    `;
+                } else {
+                    toggleHtml = '<span class="tree-toggle-spacer"></span>';
+                }
+                
+                let indentLinesHtml = '';
+                for (let i = 0; i < depth; i++) {
+                    indentLinesHtml += `<span class="tree-indent-line" style="left: ${i * 26 + 18}px;"></span>`;
+                }
+                
                 tdShare.innerHTML = `
-                    <div class="share-info">
-                        <span class="share-name">${share.name}</span>
-                        <span class="share-path">${share.path}</span>
-                        <div class="share-groups-meta">
-                            ${share.rw_group ? `<span class="meta-badge rw">RW: @${share.rw_group}</span>` : ''}
-                            ${share.ro_group ? `<span class="meta-badge ro">RO: @${share.ro_group}</span>` : ''}
+                    <div class="share-info-tree" style="padding-left: ${depth * 26}px;">
+                        ${indentLinesHtml}
+                        ${toggleHtml}
+                        <div>
+                            <div class="share-name-tree">${share.display_name || share.name}</div>
+                            <div class="share-path-tree">${share.path}</div>
+                            <div class="share-groups-meta" style="margin-top: 4px;">
+                                ${share.rw_group ? `<span class="meta-badge rw" style="font-size: 9px; padding: 2px 4px;">RW: @${share.rw_group}</span>` : ''}
+                                ${share.ro_group ? `<span class="meta-badge ro" style="font-size: 9px; padding: 2px 4px;">RO: @${share.ro_group}</span>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
