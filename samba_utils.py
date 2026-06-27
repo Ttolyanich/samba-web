@@ -494,15 +494,18 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
             print(f"Error running sudo find on {share_path}: {e}")
             find_lines = []
             
-        # Сортируем пути по длине / алфавиту для правильного порядка обхода (depth-first)
-        find_lines = sorted(find_lines)
-        
+        # Сначала парсим пути, а затем сортируем по чистому пути (path)
+        parsed_entries = []
         for line in find_lines:
             line = line.strip()
             if not line or "|" not in line:
                 continue
-                
             path, group_name = line.split("|", 1)
+            parsed_entries.append((path, group_name))
+            
+        parsed_entries.sort(key=lambda x: x[0])
+        
+        for path, group_name in parsed_entries:
             
             rel_path = os.path.relpath(path, share_path)
             parts = rel_path.split(os.sep)
