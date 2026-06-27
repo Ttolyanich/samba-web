@@ -1,7 +1,5 @@
 # Samba Web Management Panel
 
-<img width="1416" height="680" alt="image" src="https://github.com/user-attachments/assets/17baeb42-19fd-443e-aeb4-d5bc1a39d4b3" />
-
 > [!IMPORTANT]
 > **Внимание!** Данная панель является нодой и **не работает автономно**. Для её функционирования (аутентификации операторов) требуется предварительно развернутый сервер авторизации [Centralized Authentication Server](https://github.com/Ttolyanich/centralized-auth).
 
@@ -77,16 +75,17 @@
   - `/usr/bin/passwd`, `/usr/bin/smbpasswd`
   - `/usr/bin/gpasswd`
   - `/usr/bin/getfacl`
+  - `/usr/bin/find`
 
 ---
 
 ## Установка и развертывание
 
 1. **Клонирование репозитория и создание сервисного аккаунта**:
-   Склонируйте репозиторий в каталог `/opt/samba-web`:
-   ```bash
-   sudo git clone git@github.com:Ttolyanich/samba-web.git /opt/samba-web
-   ```
+    Склонируйте репозиторий в каталог `/opt/samba-web`:
+    ```bash
+    sudo git clone https://github.com/Ttolyanich/samba-web.git /opt/samba-web
+    ```
    Создайте выделенного системного пользователя `samba-web` без пароля и домашней папки:
    ```bash
    sudo useradd -r -s /bin/false -d /opt/samba-web samba-web
@@ -105,7 +104,7 @@
 3. **Настройка прав `sudo`**:
    Для того чтобы панель, работающая под ограниченным сервисным пользователем `samba-web`, могла получать права доступа из ACL директорий и управлять системными учетными записями Samba, добавьте в `/etc/sudoers.d/samba-web` следующие права:
    ```text
-   samba-web ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd, /usr/bin/getfacl
+   samba-web ALL=(ALL) NOPASSWD: /usr/bin/pdbedit, /usr/sbin/useradd, /usr/sbin/usermod, /usr/bin/passwd, /usr/bin/smbpasswd, /usr/bin/gpasswd, /usr/bin/getfacl, /usr/bin/find
    ```
 
 4. **Конфигурация приложения**:

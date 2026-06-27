@@ -311,6 +311,7 @@ def rename_samba_user(old_username, new_username, new_fullname):
 def get_directory_acl_groups(dir_path):
     """
     Выполняет getfacl для директории и извлекает группы с правами rwx (RW) и r-x (RO).
+    Если getfacl не установлен или завершился с ошибкой, берет стандартную Unix-группу владельца.
     На Windows возвращает заглушки на основе имени папки для локального тестирования.
     """
     import sys
@@ -332,38 +333,61 @@ def get_directory_acl_groups(dir_path):
             clean_name = re.sub(r'[^a-zA-Z0-9_-]', '', base_name)
             return f"G-{clean_name}", f"G-{clean_name}-r"
 
+    rw_group = ""
+    ro_group = ""
+
+    # 1. Попытка выполнить getfacl
     try:
         res = subprocess.run(["sudo", "getfacl", "-p", "-E", dir_path], capture_output=True, text=True, check=True)
         output = res.stdout
+        
+        rw_groups = []
+        ro_groups = []
+
+        for line in output.splitlines():
+            line = line.strip()
+            if line.startswith("group:"):
+                parts = line.split(":")
+                if len(parts) >= 3:
+                    group_name = parts[1]
+                    perms = parts[2]
+                    if not group_name:
+                        continue
+                    if perms == "rwx":
+                        rw_groups.append(group_name)
+                    elif perms == "r-x" or perms == "rx":
+                        ro_groups.append(group_name)
+
+        rw_group = rw_groups[0] if rw_groups else ""
+        ro_group = ro_groups[0] if ro_groups else ""
     except Exception as e:
-        print(f"Error running getfacl on {dir_path}: {e}")
-        return "", ""
+        print(f"getfacl failed on {dir_path}: {e}")
 
-    rw_groups = []
-    ro_groups = []
+    # 2. Фолбек: если getfacl не дал групп, берем Unix-группу владельца
+    if not rw_group:
+        try:
+            import grp
+            stat_info = os.stat(dir_path)
+            owner_group = grp.getgrgid(stat_info.st_gid).gr_name
+            # Проверяем наш стандарт (начинается с G-)
+            if owner_group.startswith("G-"):
+                rw_group = owner_group
+                # Проверяем наличие RO группы (с суффиксом -r) в ОС
+                ro_candidate = f"{owner_group}-r"
+                try:
+                    grp.getgrnam(ro_candidate)
+                    ro_group = ro_candidate
+                except KeyError:
+                    ro_group = ""
+        except Exception as e:
+            print(f"Fallback to Unix group owner failed for {dir_path}: {e}")
 
-    for line in output.splitlines():
-        line = line.strip()
-        if line.startswith("group:"):
-            parts = line.split(":")
-            if len(parts) >= 3:
-                group_name = parts[1]
-                perms = parts[2]
-                if not group_name:
-                    continue
-                if perms == "rwx":
-                    rw_groups.append(group_name)
-                elif perms == "r-x" or perms == "rx":
-                    ro_groups.append(group_name)
-
-    rw_group = rw_groups[0] if rw_groups else ""
-    ro_group = ro_groups[0] if ro_groups else ""
     return rw_group, ro_group
 
 def discover_acl_resources(smb_conf_path, max_depth=3):
     """
     Сканирует корневые директории общих ресурсов Samba и находит вложенные папки с ACL.
-    Возвращает список ресурсов в порядке обхода в глубину (depth-first).
+    Использует sudo find для безопасного обхода с любыми правами доступа.
     """
     shares = parse_smb_conf(smb_conf_path)
     resources = []
@@ -444,37 +468,49 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
         }
         resources.append(root_resource)
         
-        sub_resources = []
-        
-        def walk_dir(parent_path, parent_name, depth):
-            if depth > max_depth:
-                return
-            try:
-                entries = sorted(os.listdir(parent_path))
-            except Exception:
-                return
+        # Сканируем подкаталоги через sudo find
+        try:
+            cmd = ["sudo", "find", share_path, "-mindepth", "1", "-maxdepth", str(max_depth), "-type", "d"]
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            paths = sorted(res.stdout.splitlines())
+        except Exception as e:
+            print(f"Error running sudo find on {share_path}: {e}")
+            paths = []
+            
+        for path in paths:
+            path = path.strip()
+            if not path:
+                continue
                 
-            for entry in entries:
-                full_path = os.path.join(parent_path, entry)
-                if os.path.isdir(full_path) and not entry.startswith('.'):
-                    rw, ro = get_directory_acl_groups(full_path)
-                    if rw or ro:
-                        res_name = f"{parent_name} / {entry}"
-                        res_obj = {
-                            "name": res_name,
-                            "display_name": entry,
-                            "path": full_path,
-                            "depth": depth,
-                            "parent": parent_name,
-                            "rw_group": rw,
-                            "ro_group": ro
-                        }
-                        sub_resources.append(res_obj)
-                        walk_dir(full_path, res_name, depth + 1)
-                        
-        walk_dir(share_path, share["name"], 1)
-        resources.extend(sub_resources)
-        
+            rel_path = os.path.relpath(path, share_path)
+            parts = rel_path.split(os.sep)
+            
+            # Пропускаем скрытые папки (начинающиеся с точки)
+            if any(p.startswith('.') for p in parts):
+                continue
+                
+            rw, ro = get_directory_acl_groups(path)
+            if rw or ro:
+                display_name = parts[-1]
+                depth = len(parts)
+                
+                if depth == 1:
+                    parent = share["name"]
+                else:
+                    parent = f"{share['name']} / " + " / ".join(parts[:-1])
+                    
+                res_name = f"{parent} / {display_name}"
+                
+                resources.append({
+                    "name": res_name,
+                    "display_name": display_name,
+                    "path": path,
+                    "depth": depth,
+                    "parent": parent,
+                    "rw_group": rw,
+                    "ro_group": ro
+                })
+                
     for i, res in enumerate(resources):
         has_child = any(other["parent"] == res["name"] for other in resources)
         resources[i]["has_children"] = has_child
