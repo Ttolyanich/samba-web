@@ -384,18 +384,47 @@ def get_directory_acl_groups(dir_path):
 
     return rw_group, ro_group
 
-def scan_share_acl_entries(share_path):
+def scan_directories_acl(share_path, max_depth=3):
     """
-    Выполняет рекурсивный getfacl -R для всего ресурса и возвращает словарь:
-    { path: (rw_group, ro_group, owner_group) }
+    Находит все подкаталоги до max_depth с помощью find, а затем запрашивает их ACL
+    в ОДНОМ пакетном вызове getfacl для исключения оверхеда и рекурсивного сканирования файлов.
     """
     acl_map = {}
+    
+    # 1. Находим только папки до нужной глубины (файлы игнорируются, это мгновенно)
     try:
-        cmd = ["sudo", "getfacl", "-R", "-p", "-E", share_path]
+        cmd = ["sudo", "find", share_path, "-mindepth", "1", "-maxdepth", str(max_depth), "-type", "d"]
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        dir_paths = res.stdout.splitlines()
+    except Exception as e:
+        print(f"Error running find on {share_path}: {e}")
+        dir_paths = []
+
+    # Добавляем сам корень ресурса
+    dir_paths.append(share_path)
+    
+    # Очищаем пути и фильтруем скрытые папки
+    clean_paths = []
+    for p in dir_paths:
+        p = p.strip()
+        if not p:
+            continue
+        rel_path = os.path.relpath(p, share_path)
+        parts = rel_path.split(os.sep)
+        if p != share_path and any(part.startswith('.') for part in parts):
+            continue
+        clean_paths.append(p)
+
+    if not clean_paths:
+        return acl_map
+
+    # 2. Получаем ACL для всех отфильтрованных путей за один вызов
+    try:
+        cmd = ["sudo", "getfacl", "-p", "-E"] + clean_paths
         res = subprocess.run(cmd, capture_output=True, text=True, check=True)
         output = res.stdout
     except Exception as e:
-        print(f"Error running recursive getfacl on {share_path}: {e}")
+        print(f"Error running batch getfacl on {share_path}: {e}")
         return acl_map
 
     current_path = None
@@ -408,7 +437,7 @@ def scan_share_acl_entries(share_path):
             rw = rw_groups[0] if rw_groups else ""
             ro = ro_groups[0] if ro_groups else ""
             
-            # Фолбек на Unix-группу владельца, если getfacl не вернул группы
+            # Фолбек на Unix-группу владельца
             if not rw and owner_group.startswith("G-"):
                 rw = owner_group
                 
@@ -460,7 +489,6 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
     """
     Сканирует корневые директории общих ресурсов Samba и находит вложенные папки,
     которые имеют отличающиеся группы доступа (границы безопасности).
-    Использует кэш getfacl -R для исключения повторных вызовов процессов.
     """
     shares = parse_smb_conf(smb_conf_path)
     resources = []
@@ -538,11 +566,11 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
         if not share_path or not os.path.exists(share_path):
             continue
             
-        # Загружаем всю карту прав через один вызов getfacl -R
-        acl_map = scan_share_acl_entries(share_path)
+        # Проверяем, настроен ли ACL для ресурса в smb.conf (через группы или vfs objects)
+        is_acl_share = "acl_xattr" in share.get("vfs_objects", "") or share.get("rw_group") or share.get("ro_group")
         
-        # Получаем RW/RO для корня
-        root_data = acl_map.get(share_path, ("", "", ""))
+        # Считываем права для корня в любом случае
+        root_data = get_directory_acl_groups(share_path)
         rw_grp = root_data[0]
         ro_grp = root_data[1]
         
@@ -551,7 +579,6 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
         if not ro_grp and share.get("ro_group"):
             ro_grp = share["ro_group"]
             
-        # Если RO группы нет в getfacl, проверяем системный фолбек
         if not ro_grp and rw_grp:
             ro_grp = f"{rw_grp}-r" if check_ro_group_exists(f"{rw_grp}-r") else ""
             
@@ -565,9 +592,18 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
             "ro_group": ro_grp
         }
         
+        # Если это не ACL ресурс, добавляем только корень и не сканируем вложенные папки
+        if not is_acl_share:
+            root_resource["has_children"] = False
+            resources.append(root_resource)
+            continue
+            
         share_resources = [root_resource]
         
-        # Фильтруем папки из getfacl по глубине и типу
+        # Выполняем точечное быстрое сканирование
+        acl_map = scan_directories_acl(share_path, max_depth)
+        
+        # Фильтруем папки
         dir_entries = []
         for path, data in acl_map.items():
             if path == share_path:
@@ -580,9 +616,7 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
             if any(p.startswith('.') for p in parts) or len(parts) > max_depth:
                 continue
                 
-            # Дополнительно проверяем, что это директория
-            if os.path.isdir(path):
-                dir_entries.append((path, parts, data))
+            dir_entries.append((path, parts, data))
                 
         # Сортируем по чистому пути для depth-first обхода
         dir_entries.sort(key=lambda x: x[0])
@@ -592,7 +626,7 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
             ro = data[1]
             owner_group = data[2]
             
-            # Фолбек на Unix группу владельца, если getfacl не вернул группы доступа
+            # Фолбек на Unix группу владельца
             if not rw and owner_group.startswith("G-"):
                 rw = owner_group
                 
