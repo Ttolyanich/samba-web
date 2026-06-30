@@ -5,8 +5,8 @@ services:
     build: .
     container_name: samba-web
     restart: always
-    # Сетевой режим host позволяет обращаться к веб-панели по порту хоста (по умолчанию 5002)
-    network_mode: host
+    ports:
+      - "${BIND_PORT:-5002}:${BIND_PORT:-5002}"
     
     # Необходимые параметры для выполнения команд на хосте через nsenter
     privileged: true
