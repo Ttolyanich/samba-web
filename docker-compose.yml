@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   samba-web:
-    build: .
+    image: ghcr.io/ttolyanich/samba-web:latest
+    # build: .
     container_name: samba-web
     restart: always
     ports:

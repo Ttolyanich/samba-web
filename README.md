@@ -115,15 +115,22 @@ nano .env
 * `BIND_PORT` — порт, на котором будет доступна веб-панель (например, `5003`).
 * `VERIFY_SSL` — установите `false`, если центр авторизации использует самоподписанный SSL-сертификат.
 
-#### 3. Запуск контейнера
-Запустите сборку и старт контейнера в фоновом режиме:
+#### 3. Авторизация в GitHub Container Registry (если репозиторий приватный)
+Для скачивания образа с GHCR выполните один раз вход под своей учетной записью GitHub (потребуется сгенерировать Personal Access Token c правами `read:packages`):
 ```bash
-sudo docker compose up --build -d
+docker login ghcr.io
+```
+
+#### 4. Запуск контейнера
+Скачайте готовый собранный образ и запустите контейнер:
+```bash
+sudo docker compose pull
+sudo docker compose up -d
 ```
 
 Контейнер автоматически примонтирует базу данных SQLite в локальную папку `./data`, чтобы журналы аудита и временные ссылки не стерлись при обновлении или перезапуске контейнера.
 
-#### 4. Просмотр логов
+#### 5. Просмотр логов
 ```bash
 sudo docker logs -f samba-web
 ```
@@ -188,7 +195,8 @@ sudo docker logs -f samba-web
 ```bash
 cd /opt/samba-web
 sudo git pull
-sudo docker compose up --build -d
+sudo docker compose pull
+sudo docker compose up -d
 ```
 
 ### При использовании Systemd:
