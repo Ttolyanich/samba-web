@@ -83,22 +83,62 @@
 
 ## Установка и развертывание
 
-1. **Клонирование репозитория и создание сервисного аккаунта**:
-    Склонируйте репозиторий в каталог `/opt/samba-web`:
-    ```bash
-    sudo git clone https://github.com/Ttolyanich/samba-web.git /opt/samba-web
-    ```
+Вы можете запустить панель управления двумя способами:
+1. **Через Docker (рекомендуемый способ)** — легкое развертывание, изоляция, автоматическое управление зависимостями и легкое обновление.
+2. **Напрямую в системе через Systemd** — классический способ запуска.
+
+---
+
+### Вариант 1. Развертывание через Docker (Рекомендуется)
+
+Благодаря использованию механизма `nsenter` (работа в пространствах имен хоста), контейнер безопасно управляет Samba и системными пользователями непосредственно на самом сервере.
+
+#### 1. Подготовка папки проекта
+Склонируйте репозиторий в каталог `/opt/samba-web` (если еще не склонирован):
+```bash
+sudo git clone https://github.com/Ttolyanich/samba-web.git /opt/samba-web
+cd /opt/samba-web
+```
+
+#### 2. Настройка переменных окружения
+Создайте файл `.env` на основе шаблона:
+```bash
+cp .env.example .env
+nano .env
+```
+Задайте значения для параметров:
+* `SECRET_KEY` — случайная секретная строка для Flask сессий.
+* `CENTRAL_AUTH_URL` — адрес вашего центра авторизации (например, `https://192.168.102.2:8443`).
+* `NODE_API_TOKEN` — токен авторизации ноды, зарегистрированный в центре авторизации.
+* `BIND_PORT` — порт, на котором будет доступна веб-панель (например, `5003`).
+* `VERIFY_SSL` — установите `false`, если центр авторизации использует самоподписанный SSL-сертификат.
+
+#### 3. Запуск контейнера
+Запустите сборку и старт контейнера в фоновом режиме:
+```bash
+sudo docker compose up --build -d
+```
+
+Контейнер автоматически примонтирует базу данных SQLite в локальную папку `./data`, чтобы журналы аудита и временные ссылки не стерлись при обновлении или перезапуске контейнера.
+
+#### 4. Просмотр логов
+```bash
+sudo docker logs -f samba-web
+```
+
+---
+
+### Вариант 2. Развертывание через Systemd (Альтернативный)
+
+1. **Создание сервисного аккаунта**:
    Создайте выделенного системного пользователя `samba-web` без пароля и домашней папки:
    ```bash
    sudo useradd -r -s /bin/false -d /opt/samba-web samba-web
-   ```
-   Установите права владельца на каталог с проектом для созданного пользователя:
-   ```bash
    sudo chown -R samba-web:samba-web /opt/samba-web
    ```
 
 2. **Установка Python зависимостей**:
-   Установите необходимые библиотеки (Flask, requests, openpyxl) с помощью `pip` (или через системный пакетный менеджер):
+   Установите необходимые библиотеки (Flask, requests, openpyxl) с помощью `pip`:
    ```bash
    pip3 install -r /opt/samba-web/requirements.txt
    ```
@@ -115,16 +155,17 @@
    {
      "mode": "node",
      "secret_key": "ВАШ_СЛУЧАЙНЫЙ_СЕКРЕТНЫЙ_КЛЮЧ",
-     "central_auth_url": "http://<CENTRAL_AUTH_SERVER_IP>:5001",
+     "central_auth_url": "https://192.168.102.2:8443",
      "node_api_token": "ТОКЕН_АВТОРИЗАЦИИ_НОДЫ_НА_СЕРВЕРЕ",
      "bind_host": "0.0.0.0",
      "bind_port": 5002,
-     "smb_conf_path": "/etc/samba/smb.conf"
+     "smb_conf_path": "/etc/samba/smb.conf",
+     "verify_ssl": false
    }
    ```
 
 5. **Настройка Systemd службы**:
-   Скопируйте и запустите службу `samba-web.service` (она по умолчанию настроена на запуск от пользователя `User=samba-web`):
+   Скопируйте и запустите службу `samba-web.service`:
    ```bash
    sudo cp /opt/samba-web/samba-web.service /etc/systemd/system/
    sudo systemctl daemon-reload
@@ -136,3 +177,22 @@
    ```bash
    sudo journalctl -u samba-web -f
    ```
+
+---
+
+## Обновление приложения
+
+### При использовании Docker:
+```bash
+cd /opt/samba-web
+sudo git pull
+sudo docker compose up --build -d
+```
+
+### При использовании Systemd:
+```bash
+cd /opt/samba-web
+sudo git pull
+sudo systemctl restart samba-web
+```
+
