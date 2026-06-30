@@ -2,6 +2,49 @@ import os
 import re
 import subprocess
 
+USE_NSENTER = os.environ.get("USE_NSENTER", "false").lower() == "true"
+
+def run_system_command(cmd, **kwargs):
+    """
+    Выполняет системную команду. Если включен режим USE_NSENTER,
+    выполняет её на хост-системе через nsenter.
+    """
+    if USE_NSENTER:
+        nsenter_prefix = ["nsenter", "--target", "1", "--mount", "--uts", "--ipc", "--net", "--pid", "--"]
+        if cmd[0] == "sudo":
+            cmd = cmd[1:]
+        full_cmd = nsenter_prefix + cmd
+    else:
+        full_cmd = cmd
+        
+    return subprocess.run(full_cmd, **kwargs)
+
+def system_popen(cmd, **kwargs):
+    """
+    Создает процесс Popen. Если включен USE_NSENTER,
+    запускает команду на хосте через nsenter.
+    """
+    if USE_NSENTER:
+        nsenter_prefix = ["nsenter", "--target", "1", "--mount", "--uts", "--ipc", "--net", "--pid", "--"]
+        if cmd[0] == "sudo":
+            cmd = cmd[1:]
+        full_cmd = nsenter_prefix + cmd
+    else:
+        full_cmd = cmd
+        
+    return subprocess.Popen(full_cmd, **kwargs)
+
+def system_path_exists(path):
+    """
+    Проверяет существование пути. Если включен USE_NSENTER, проверяет на хосте через test -e.
+    """
+    if USE_NSENTER:
+        cmd = ["nsenter", "--target", "1", "--mount", "--uts", "--ipc", "--net", "--pid", "--", "test", "-e", path]
+        res = subprocess.run(cmd)
+        return res.returncode == 0
+    else:
+        return os.path.exists(path)
+
 def parse_smb_conf(conf_path):
     """
     Парсит smb.conf, находит секции (шары) и вытаскивает ассоциированные
@@ -10,7 +53,7 @@ def parse_smb_conf(conf_path):
     shares = []
     current_share = None
     
-    if not os.path.exists(conf_path):
+    if not system_path_exists(conf_path):
         return shares
         
     try:
@@ -106,7 +149,7 @@ def get_samba_users():
     и определяет их статус блокировки и полное имя.
     """
     try:
-        res = subprocess.run(["sudo", "pdbedit", "-L", "-v"], capture_output=True, text=True, check=True)
+        res = run_system_command(["sudo", "pdbedit", "-L", "-v"], capture_output=True, text=True, check=True)
         output = res.stdout
     except Exception as e:
         print(f"Error running pdbedit: {e}")
@@ -139,7 +182,7 @@ def get_user_groups(username):
     Получает все группы, в которых состоит пользователь (через id -Gn)
     """
     try:
-        res = subprocess.run(["id", "-Gn", username], capture_output=True, text=True, check=True)
+        res = run_system_command(["id", "-Gn", username], capture_output=True, text=True, check=True)
         return [g.strip() for g in res.stdout.split()]
     except Exception:
         return []
@@ -149,7 +192,7 @@ def ensure_group_exists(groupname):
     Создает группу ОС, если она не существует
     """
     try:
-        subprocess.run(["sudo", "groupadd", "-f", groupname], check=True)
+        run_system_command(["sudo", "groupadd", "-f", groupname], check=True)
         return True
     except Exception as e:
         print(f"Error creating group {groupname}: {e}")
@@ -161,7 +204,7 @@ def add_user_to_group(username, groupname):
     """
     ensure_group_exists(groupname)
     try:
-        subprocess.run(["sudo", "gpasswd", "-a", username, groupname], check=True, capture_output=True)
+        run_system_command(["sudo", "gpasswd", "-a", username, groupname], check=True, capture_output=True)
         return True
     except Exception as e:
         print(f"Error adding {username} to {groupname}: {e}")
@@ -172,7 +215,7 @@ def remove_user_from_group(username, groupname):
     Удаляет пользователя из группы ОС
     """
     try:
-        subprocess.run(["sudo", "gpasswd", "-d", username, groupname], check=True, capture_output=True)
+        run_system_command(["sudo", "gpasswd", "-d", username, groupname], check=True, capture_output=True)
         return True
     except Exception as e:
         print(f"Error removing {username} from {groupname}: {e}")
@@ -183,7 +226,7 @@ def system_user_exists(username):
     Проверяет существование пользователя в ОС
     """
     try:
-        subprocess.run(["id", username], check=True, capture_output=True)
+        run_system_command(["id", username], check=True, capture_output=True)
         return True
     except Exception:
         return False
@@ -198,21 +241,21 @@ def create_samba_user(username, password, full_name=""):
             cmd = ["sudo", "useradd", "-m", "-s", "/usr/sbin/nologin", username]
             if full_name:
                 cmd += ["-c", full_name]
-            subprocess.run(cmd, check=True, capture_output=True)
+            run_system_command(cmd, check=True, capture_output=True)
         except Exception as e:
             print(f"Error creating OS user: {e}")
             return False, "Ошибка создания пользователя в ОС"
             
     try:
         # Устанавливаем пароль в Samba через smbpasswd
-        proc = subprocess.Popen(["sudo", "smbpasswd", "-a", "-s", username], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        proc = system_popen(["sudo", "smbpasswd", "-a", "-s", username], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         stdout, stderr = proc.communicate(input=f"{password}\n{password}\n")
         if proc.returncode != 0:
             return False, f"Ошибка smbpasswd: {stderr.strip()}"
             
         # Устанавливаем Full Name в Samba
         if full_name:
-            subprocess.run(["sudo", "pdbedit", "-r", "-u", username, "-f", full_name], check=True, capture_output=True)
+            run_system_command(["sudo", "pdbedit", "-r", "-u", username, "-f", full_name], check=True, capture_output=True)
             
         return True, "Пользователь успешно создан в Samba"
     except Exception as e:
@@ -224,7 +267,7 @@ def block_samba_user(username):
     Блокирует доступ пользователя в Samba (-d)
     """
     try:
-        subprocess.run(["sudo", "smbpasswd", "-d", username], check=True, capture_output=True)
+        run_system_command(["sudo", "smbpasswd", "-d", username], check=True, capture_output=True)
         return True
     except Exception as e:
         print(f"Error blocking user {username}: {e}")
@@ -235,7 +278,7 @@ def unblock_samba_user(username):
     Разблокирует доступ пользователя в Samba (-e)
     """
     try:
-        subprocess.run(["sudo", "smbpasswd", "-e", username], check=True, capture_output=True)
+        run_system_command(["sudo", "smbpasswd", "-e", username], check=True, capture_output=True)
         return True
     except Exception as e:
         print(f"Error unblocking user {username}: {e}")
@@ -246,7 +289,7 @@ def reset_samba_password(username, password):
     Сбрасывает пароль пользователя в Samba
     """
     try:
-        proc = subprocess.Popen(["sudo", "smbpasswd", "-a", "-s", username], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        proc = system_popen(["sudo", "smbpasswd", "-a", "-s", username], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         stdout, stderr = proc.communicate(input=f"{password}\n{password}\n")
         if proc.returncode != 0:
             return False, f"Ошибка smbpasswd: {stderr.strip()}"
@@ -263,9 +306,9 @@ def rename_samba_user(old_username, new_username, new_fullname):
     if old_username == new_username:
         try:
             # Обновляем ФИО в ОС
-            subprocess.run(["sudo", "usermod", "-c", new_fullname, old_username], check=True, capture_output=True)
+            run_system_command(["sudo", "usermod", "-c", new_fullname, old_username], check=True, capture_output=True)
             # Обновляем ФИО в Samba
-            subprocess.run(["sudo", "pdbedit", "-r", "-u", old_username, "-f", new_fullname], check=True, capture_output=True)
+            run_system_command(["sudo", "pdbedit", "-r", "-u", old_username, "-f", new_fullname], check=True, capture_output=True)
             return True, "ФИО сотрудника успешно изменено"
         except Exception as e:
             print(f"Error updating fullname for {old_username}: {e}")
@@ -274,7 +317,7 @@ def rename_samba_user(old_username, new_username, new_fullname):
     # Если логин изменился, переносим аккаунт с сохранением хэша пароля
     nt_hash = ""
     try:
-        res = subprocess.run(["sudo", "pdbedit", "-w", "-u", old_username], capture_output=True, text=True, check=True)
+        res = run_system_command(["sudo", "pdbedit", "-w", "-u", old_username], capture_output=True, text=True, check=True)
         parts = res.stdout.strip().split(":")
         if len(parts) >= 4:
             nt_hash = parts[3]
@@ -283,28 +326,28 @@ def rename_samba_user(old_username, new_username, new_fullname):
 
     try:
         # 1. Переименовываем системного пользователя в Linux и обновляем комментарий (ФИО)
-        subprocess.run(["sudo", "usermod", "-l", new_username, "-c", new_fullname, old_username], check=True, capture_output=True)
+        run_system_command(["sudo", "usermod", "-l", new_username, "-c", new_fullname, old_username], check=True, capture_output=True)
     except Exception as e:
         print(f"Error renaming Linux user from {old_username} to {new_username}: {e}")
         return False, f"Ошибка переименования в ОС: {e}"
 
     try:
         # 2. Создаем нового пользователя в Samba
-        proc = subprocess.Popen(["sudo", "smbpasswd", "-a", "-s", new_username], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        proc = system_popen(["sudo", "smbpasswd", "-a", "-s", new_username], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         stdout, stderr = proc.communicate(input="dummypassword\ndummypassword\n")
         if proc.returncode != 0:
             return False, f"Ошибка smbpasswd: {stderr.strip()}"
 
         # 3. Восстанавливаем старый хэш пароля
         if nt_hash and nt_hash != "X" * 32:
-            subprocess.run(["sudo", "pdbedit", "-r", "-u", new_username, f"--set-nt-hash={nt_hash}"], check=True, capture_output=True)
+            run_system_command(["sudo", "pdbedit", "-r", "-u", new_username, f"--set-nt-hash={nt_hash}"], check=True, capture_output=True)
 
         # 4. Устанавливаем ФИО в Samba для новой учетной записи
         if new_fullname:
-            subprocess.run(["sudo", "pdbedit", "-r", "-u", new_username, "-f", new_fullname], check=True, capture_output=True)
+            run_system_command(["sudo", "pdbedit", "-r", "-u", new_username, "-f", new_fullname], check=True, capture_output=True)
 
         # 5. Удаляем старый Samba-аккаунт
-        subprocess.run(["sudo", "pdbedit", "-x", "-u", old_username], check=True, capture_output=True)
+        run_system_command(["sudo", "pdbedit", "-x", "-u", old_username], check=True, capture_output=True)
 
         return True, "Пользователь успешно переименован"
     except Exception as e:
@@ -341,7 +384,7 @@ def get_directory_acl_groups(dir_path):
 
     # 1. Попытка выполнить getfacl
     try:
-        res = subprocess.run(["sudo", "getfacl", "-p", "-E", dir_path], capture_output=True, text=True, check=True)
+        res = run_system_command(["sudo", "getfacl", "-p", "-E", dir_path], capture_output=True, text=True, check=True)
         output = res.stdout
         
         rw_groups = []
@@ -369,18 +412,17 @@ def get_directory_acl_groups(dir_path):
     # 2. Фолбек: если getfacl не дал групп, берем Unix-группу владельца
     if not rw_group:
         try:
-            import grp
-            stat_info = os.stat(dir_path)
-            owner_group = grp.getgrgid(stat_info.st_gid).gr_name
+            res_owner = run_system_command(["stat", "-c", "%G", dir_path], capture_output=True, text=True)
+            owner_group = res_owner.stdout.strip()
             # Проверяем наш стандарт (начинается с G-)
             if owner_group.startswith("G-"):
                 rw_group = owner_group
                 # Проверяем наличие RO группы (с суффиксом -r) в ОС
                 ro_candidate = f"{owner_group}-r"
-                try:
-                    grp.getgrnam(ro_candidate)
+                res_grp = run_system_command(["getent", "group", ro_candidate])
+                if res_grp.returncode == 0:
                     ro_group = ro_candidate
-                except KeyError:
+                else:
                     ro_group = ""
         except Exception as e:
             print(f"Fallback to Unix group owner failed for {dir_path}: {e}")
@@ -397,7 +439,7 @@ def scan_directories_acl(share_path, max_depth=3):
     # 1. Находим только папки до нужной глубины (файлы игнорируются, это мгновенно)
     try:
         cmd = ["sudo", "find", share_path, "-mindepth", "1", "-maxdepth", str(max_depth), "-type", "d"]
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        res = run_system_command(cmd, capture_output=True, text=True, check=True)
         dir_paths = res.stdout.splitlines()
     except Exception as e:
         print(f"Error running find on {share_path}: {e}")
@@ -424,7 +466,7 @@ def scan_directories_acl(share_path, max_depth=3):
     # 2. Получаем ACL для всех отфильтрованных путей за один вызов
     try:
         cmd = ["sudo", "getfacl", "-p", "-E"] + clean_paths
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        res = run_system_command(cmd, capture_output=True, text=True, check=True)
         output = res.stdout
     except Exception as e:
         print(f"Error running batch getfacl on {share_path}: {e}")
@@ -551,22 +593,19 @@ def discover_acl_resources(smb_conf_path, max_depth=3):
         return mock_resources
 
     import grp
-    # Кэшируем существование RO групп в ОС, чтобы не делать grp.getgrnam в цикле
+    # Кэшируем существование RO групп в ОС, чтобы не делать getent в цикле
     _group_cache = {}
     def check_ro_group_exists(ro_name):
         if ro_name in _group_cache:
             return _group_cache[ro_name]
-        try:
-            grp.getgrnam(ro_name)
-            _group_cache[ro_name] = True
-            return True
-        except KeyError:
-            _group_cache[ro_name] = False
-            return False
+        res_grp = run_system_command(["getent", "group", ro_name])
+        exists = (res_grp.returncode == 0)
+        _group_cache[ro_name] = exists
+        return exists
 
     for share in shares:
         share_path = share["path"]
-        if not share_path or not os.path.exists(share_path):
+        if not share_path or not system_path_exists(share_path):
             continue
             
         # Проверяем, настроен ли ACL для ресурса в smb.conf (через группы или vfs objects)
@@ -687,7 +726,7 @@ def reset_user_samba_sessions(username):
     pids = []
     try:
         # Запускаем smbstatus -p для получения списка процессов
-        res = subprocess.run(["sudo", "smbstatus", "-p"], capture_output=True, text=True, check=True)
+        res = run_system_command(["sudo", "smbstatus", "-p"], capture_output=True, text=True, check=True)
         lines = res.stdout.splitlines()
         
         # Парсим вывод
@@ -714,7 +753,7 @@ def reset_user_samba_sessions(username):
     errors = []
     for pid in pids:
         try:
-            subprocess.run(["sudo", "kill", pid], check=True)
+            run_system_command(["sudo", "kill", pid], check=True)
             killed_count += 1
         except Exception as e:
             errors.append(f"PID {pid}: {e}")

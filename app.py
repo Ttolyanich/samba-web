@@ -29,21 +29,45 @@ config = {
     "node_api_token": "vpn-panel-shared-secret-token-2026",
     "bind_host": "0.0.0.0",
     "bind_port": 5002,
-    "smb_conf_path": "/etc/samba/smb.conf"
+    "smb_conf_path": "/etc/samba/smb.conf",
+    "verify_ssl": True
 }
 
+# 1. Загружаем из файла конфигурации, если он есть
 if os.path.exists(CONFIG_PATH):
     try:
         with open(CONFIG_PATH, "r") as f:
-            config.update(json.load(f))
+            file_config = json.load(f)
+            if "bind_port" in file_config:
+                file_config["bind_port"] = int(file_config["bind_port"])
+            if "verify_ssl" in file_config:
+                if isinstance(file_config["verify_ssl"], str):
+                    file_config["verify_ssl"] = file_config["verify_ssl"].lower() == "true"
+            config.update(file_config)
     except Exception as e:
         print(f"Error loading config: {e}")
+
+# 2. Переменные окружения имеют высший приоритет и переопределяют значения из файла
+if os.getenv("SECRET_KEY"):
+    config["secret_key"] = os.getenv("SECRET_KEY")
+if os.getenv("CENTRAL_AUTH_URL"):
+    config["central_auth_url"] = os.getenv("CENTRAL_AUTH_URL")
+if os.getenv("NODE_API_TOKEN"):
+    config["node_api_token"] = os.getenv("NODE_API_TOKEN")
+if os.getenv("BIND_HOST"):
+    config["bind_host"] = os.getenv("BIND_HOST")
+if os.getenv("BIND_PORT"):
+    config["bind_port"] = int(os.getenv("BIND_PORT"))
+if os.getenv("SMB_CONF_PATH"):
+    config["smb_conf_path"] = os.getenv("SMB_CONF_PATH")
+if os.getenv("VERIFY_SSL"):
+    config["verify_ssl"] = os.getenv("VERIFY_SSL").lower() == "true"
 
 app = Flask(__name__)
 app.secret_key = config["secret_key"]
 
 # База данных аудита
-NODE_DB = "samba-node.db"
+NODE_DB = os.getenv("DATABASE_PATH", "samba-node.db")
 
 def init_db():
     conn = sqlite3.connect(NODE_DB)
