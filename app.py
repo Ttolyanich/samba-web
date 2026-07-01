@@ -25,7 +25,7 @@ CONFIG_PATH = os.getenv("SAMBA_WEB_CONFIG", "config.json")
 config = {
     "mode": "node",
     "secret_key": "f2a8c3d9b4e578c1d2e3f4a5b6c7d8e9",
-    "central_auth_url": "http://localhost:5001",
+    "central_auth_url": "http://host.docker.internal:5001",
     "node_api_token": "vpn-panel-shared-secret-token-2026",
     "bind_host": "0.0.0.0",
     "bind_port": 5002,
