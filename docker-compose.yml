@@ -20,7 +20,6 @@ services:
       - /etc/samba/smb.conf:/etc/samba/smb.conf:ro
       
     environment:
-      - SAMBA_WEB_CONFIG=/app/data/config.json
       - SECRET_KEY=${SECRET_KEY}
       - CENTRAL_AUTH_URL=${CENTRAL_AUTH_URL}
       - NODE_API_TOKEN=${NODE_API_TOKEN}
