@@ -164,7 +164,7 @@ sudo docker logs -f samba-web
    {
      "mode": "node",
      "secret_key": "ВАШ_СЛУЧАЙНЫЙ_СЕКРЕТНЫЙ_КЛЮЧ",
-     "central_auth_url": "https://192.168.102.2:8443",
+     "central_auth_url": "https://localhost:5001",
      "node_api_token": "ТОКЕН_АВТОРИЗАЦИИ_НОДЫ_НА_СЕРВЕРЕ",
      "bind_host": "0.0.0.0",
      "bind_port": 5002,
