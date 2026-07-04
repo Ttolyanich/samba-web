@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samba Web Panel [{{ hostname }}] — Вход</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Немедленно применяем сохраненную тему до отрисовки интерфейса
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+</head>
+<body class="login-body">
+
+    <div style="position: absolute; top: 24px; right: 24px;">
+        <button id="theme-toggle" class="btn-icon-toggle" title="Переключить тему">
+            <!-- Sun Icon (shown in dark theme) -->
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <!-- Moon Icon (shown in light theme) -->
+            <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+    </div>
+
+    <div class="login-wrapper">
+        <div class="login-card glass">
+            <div class="login-header">
+                <div class="logo-box big">S</div>
+                <h2>SAMBA <span class="accent-text">PANEL</span></h2>
+                <p>Вход в систему управления доступом</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <input type="text" id="username" autocomplete="username" placeholder="Введите имя пользователя" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" autocomplete="current-password" placeholder="Введите пароль" required>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="btn-submit wide">Войти</button>
+            </form>
+            
+            <div id="errorMessage" class="error-msg text-center" style="display: none; margin-top: 16px;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            errorDiv.style.display = 'none';
+            submitBtn.innerText = 'Вход...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`./login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = `./`;
+                } else {
+                    errorDiv.innerText = result.error || 'Ошибка входа';
+                    errorDiv.style.display = 'block';
+                    submitBtn.innerText = 'Войти';
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Ошибка соединения с сервером';
+                errorDiv.style.display = 'block';
+                submitBtn.innerText = 'Войти';
+                submitBtn.disabled = false;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const sunIcon = themeToggleBtn.querySelector('.sun-icon');
+            const moonIcon = themeToggleBtn.querySelector('.moon-icon');
+
+            if (document.documentElement.classList.contains('light-theme')) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('light-theme');
+                const isLight = document.documentElement.classList.contains('light-theme');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                
+                if (isLight) {
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

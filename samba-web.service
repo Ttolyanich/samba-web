@@ -1,0 +1,16 @@
+[Unit]
+Description=Samba Web Management Panel
+After=network.target
+
+[Service]
+Type=simple
+User=samba-web
+WorkingDirectory=/opt/samba-web
+Environment=SAMBA_WEB_CONFIG=/opt/samba-web/config.json BIND_HOST=0.0.0.0 BIND_PORT=5003
+EnvironmentFile=-/opt/samba-web/.env
+ExecStart=/usr/bin/python3 -m gunicorn --workers 2 --bind ${BIND_HOST}:${BIND_PORT} app:app
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

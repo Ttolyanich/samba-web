@@ -1,0 +1,33 @@
+services:
+  samba-web:
+    image: ghcr.io/ttolyanich/samba-web:latest
+    # build: .
+    container_name: samba-web
+    restart: always
+    ports:
+      - "${BIND_PORT:-5003}:${BIND_PORT:-5003}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    
+    # Необходимые параметры для выполнения команд на хосте через nsenter
+    privileged: true
+    pid: host
+    
+    volumes:
+      # Папка для сохранения базы данных (журнал аудита, ссылки)
+      - ./data:/app/data
+      # Монтируем конфигурацию Samba с хоста в режиме только для чтения
+      - /etc/samba/smb.conf:/etc/samba/smb.conf:ro
+      
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - CENTRAL_AUTH_URL=${CENTRAL_AUTH_URL}
+      - NODE_API_TOKEN=${NODE_API_TOKEN}
+      - NODE_NAME=${NODE_NAME}
+      - BIND_HOST=${BIND_HOST:-0.0.0.0}
+      - BIND_PORT=${BIND_PORT:-5003}
+      - SMB_CONF_PATH=${SMB_CONF_PATH:-/etc/samba/smb.conf}
+      - VERIFY_SSL=${VERIFY_SSL:-true}
+      - DATABASE_PATH=/app/data/samba-node.db
+      - USE_NSENTER=true
+    command: gunicorn --workers 2 --bind 0.0.0.0:${BIND_PORT:-5003} app:app
