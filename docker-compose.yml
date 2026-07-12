@@ -5,7 +5,7 @@ services:
     container_name: samba-web
     restart: always
     ports:
-      - "${BIND_PORT:-5003}:${BIND_PORT:-5003}"
+      - "${BIND_HOST:-127.0.0.1}:${BIND_PORT:-5003}:${BIND_PORT:-5003}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     
