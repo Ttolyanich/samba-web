@@ -30,9 +30,9 @@ from samba_utils import (
 CONFIG_PATH = os.getenv("SAMBA_WEB_CONFIG", "config.json")
 config = {
     "mode": "node",
-    "secret_key": "f2a8c3d9b4e578c1d2e3f4a5b6c7d8e9",
+    "secret_key": "default-secret-key-32-chars-long-please-change",
     "central_auth_url": "http://host.docker.internal:5001",
-    "node_api_token": "vpn-panel-shared-secret-token-2026",
+    "node_api_token": "default-token",
     "node_name": socket.gethostname(),
     "bind_host": "0.0.0.0",
     "bind_port": 5003,
@@ -71,6 +71,24 @@ if os.getenv("SMB_CONF_PATH"):
     config["smb_conf_path"] = os.getenv("SMB_CONF_PATH")
 if os.getenv("VERIFY_SSL"):
     config["verify_ssl"] = os.getenv("VERIFY_SSL").lower() == "true"
+
+# Автогенерация secret_key при обнаружении дефолтного значения
+if config.get("secret_key") == "default-secret-key-32-chars-long-please-change" or not config.get("secret_key"):
+    import secrets
+    config["secret_key"] = secrets.token_hex(16)
+    try:
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(config, f, indent=2)
+        print(f"AUTO-CONFIG: Generated secure random secret_key and saved to {CONFIG_PATH}")
+    except Exception as e:
+        print(f"Error saving auto-generated secret key: {e}")
+
+# Предупреждение на ноде, если используется дефолтный токен
+if config.get("node_api_token") == "default-token":
+    print("*" * 60)
+    print("WARNING: Node is using default 'node_api_token'!")
+    print("Please set a secure shared token that matches the Auth Server.")
+    print("*" * 60)
 
 app = Flask(__name__)
 app.secret_key = config["secret_key"]
@@ -241,22 +259,17 @@ def api_status():
         "smb_conf_path": config["smb_conf_path"]
     })
 
-@app.route('/api/matrix')
-@login_required
-def api_matrix():
-    shares = discover_acl_resources(config["smb_conf_path"])
-    users = get_samba_users()
-    
+def build_matrix(shares, users):
     matrix = {}
     for user in users:
         username = user["username"]
         user_groups = get_user_groups(username)
-        
+
         matrix[username] = {}
         for share in shares:
             rw_grp = share["rw_group"]
             ro_grp = share["ro_group"]
-            
+
             # Проверяем права по группам
             if rw_grp and rw_grp in user_groups:
                 matrix[username][share["name"]] = "rw"
@@ -264,11 +277,17 @@ def api_matrix():
                 matrix[username][share["name"]] = "ro"
             else:
                 matrix[username][share["name"]] = "none"
-                
+    return matrix
+
+@app.route('/api/matrix')
+@login_required
+def api_matrix():
+    shares = discover_acl_resources(config["smb_conf_path"])
+    users = get_samba_users()
     return jsonify({
         "shares": shares,
         "users": users,
-        "matrix": matrix
+        "matrix": build_matrix(shares, users)
     })
 
 def generate_excel_matrix(shares, users):
@@ -743,28 +762,11 @@ def api_shared_matrix_data(token):
             
         shares = discover_acl_resources(config["smb_conf_path"])
         users = get_samba_users()
-        
-        matrix = {}
-        for user in users:
-            username = user["username"]
-            user_groups = get_user_groups(username)
-            
-            matrix[username] = {}
-            for share in shares:
-                rw_grp = share["rw_group"]
-                ro_grp = share["ro_group"]
-                
-                if rw_grp and rw_grp in user_groups:
-                    matrix[username][share["name"]] = "rw"
-                elif ro_grp and ro_grp in user_groups:
-                    matrix[username][share["name"]] = "ro"
-                else:
-                    matrix[username][share["name"]] = "none"
-                    
+
         return jsonify({
             "shares": shares,
             "users": users,
-            "matrix": matrix
+            "matrix": build_matrix(shares, users)
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
