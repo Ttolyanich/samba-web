@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 # Загрузка переменных окружения из .env
 load_dotenv()
 from werkzeug.middleware.proxy_fix import ProxyFix
+import time
 from samba_utils import (
     discover_acl_resources,
     get_samba_users,
@@ -23,13 +24,18 @@ from samba_utils import (
     unblock_samba_user,
     reset_samba_password,
     rename_samba_user,
-    reset_user_samba_sessions
+    reset_user_samba_sessions,
+    sanitize_username,
+    sanitize_fullname
 )
 
 # Загрузка конфигурации
 CONFIG_PATH = os.getenv("SAMBA_WEB_CONFIG", "config.json")
 config = {
     "mode": "node",
+    "auth_mode": "central", # "central" или "standalone"
+    "standalone_admin_user": "admin",
+    "standalone_admin_password": "admin123",
     "secret_key": "default-secret-key-32-chars-long-please-change",
     "central_auth_url": "http://host.docker.internal:5001",
     "node_api_token": "default-token",
@@ -55,6 +61,12 @@ if os.path.exists(CONFIG_PATH):
         print(f"Error loading config: {e}")
 
 # 2. Переменные окружения имеют высший приоритет и переопределяют значения из файла
+if os.getenv("AUTH_MODE"):
+    config["auth_mode"] = os.getenv("AUTH_MODE").lower().strip()
+if os.getenv("STANDALONE_ADMIN_USER"):
+    config["standalone_admin_user"] = os.getenv("STANDALONE_ADMIN_USER").strip()
+if os.getenv("STANDALONE_ADMIN_PASSWORD"):
+    config["standalone_admin_password"] = os.getenv("STANDALONE_ADMIN_PASSWORD")
 if os.getenv("SECRET_KEY"):
     config["secret_key"] = os.getenv("SECRET_KEY")
 if os.getenv("CENTRAL_AUTH_URL"):
@@ -124,8 +136,18 @@ def add_security_headers(response):
 # База данных аудита
 NODE_DB = os.getenv("DATABASE_PATH", "samba-node.db")
 
+def get_db_connection():
+    db_dir = os.path.dirname(NODE_DB)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+    conn = sqlite3.connect(NODE_DB, timeout=10.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def init_db():
-    conn = sqlite3.connect(NODE_DB)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS audit_logs (
@@ -144,19 +166,53 @@ def init_db():
             description TEXT
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS rate_limits (
+            rate_key TEXT NOT NULL,
+            attempt_time REAL NOT NULL
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_samba_rate ON rate_limits (rate_key, attempt_time)")
     conn.commit()
     conn.close()
 
+LOGIN_MAX_ATTEMPTS = 10
+LOGIN_WINDOW_SECONDS = 300
+
+def login_rate_limited(key):
+    now = time.time()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM rate_limits WHERE attempt_time < ?", (now - LOGIN_WINDOW_SECONDS,))
+        cursor.execute("SELECT COUNT(*) FROM rate_limits WHERE rate_key = ? AND attempt_time >= ?", (key, now - LOGIN_WINDOW_SECONDS))
+        count = cursor.fetchone()[0]
+        conn.commit()
+        conn.close()
+        return count >= LOGIN_MAX_ATTEMPTS
+    except Exception as e:
+        print(f"Rate limit error: {e}")
+        return False
+
+def register_failed_login(key):
+    now = time.time()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO rate_limits (rate_key, attempt_time) VALUES (?, ?)", (key, now))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Register failed login error: {e}")
+
 def log_action(username, action, details=""):
     try:
-        conn = sqlite3.connect(NODE_DB)
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO audit_logs (username, action, details) VALUES (?, ?, ?)",
-            (username, action, details)
+            (username or "unknown", action, details)
         )
-        conn.commit()
-        # Очистка старых логов (храним только последние 1000)
         cursor.execute("""
             DELETE FROM audit_logs 
             WHERE id NOT IN (
@@ -184,7 +240,10 @@ def login_required(f):
 
 @app.context_processor
 def inject_hostname():
-    return {"hostname": config.get("node_name", socket.gethostname())}
+    return {
+        "hostname": config.get("node_name", socket.gethostname()),
+        "auth_mode": config.get("auth_mode", "central")
+    }
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
@@ -198,8 +257,29 @@ def login_page():
         
         if not username or not password:
             return jsonify({"error": "Укажите имя пользователя и пароль"}), 400
+
+        if login_rate_limited(request.remote_addr):
+            return jsonify({"error": "Слишком много неудачных попыток входа. Попробуйте через 5 минут."}), 429
             
-        # Запрос к Central Auth Server
+        auth_mode = config.get("auth_mode", "central")
+
+        # 1. Автономный режим (Standalone)
+        if auth_mode == "standalone":
+            admin_user = config.get("standalone_admin_user", "admin")
+            admin_pass = config.get("standalone_admin_password", "admin123")
+            if username == admin_user and password == admin_pass:
+                session["logged_in"] = True
+                session["username"] = username
+                session["role"] = "admin"
+                session["auth_mode"] = "standalone"
+                log_action(username, "LOGIN", "Успешный вход в автономном режиме (Standalone)")
+                return jsonify({"success": True})
+            else:
+                register_failed_login(request.remote_addr)
+                log_action(username, "LOGIN_FAILED", "Неверный логин или пароль (Standalone)")
+                return jsonify({"error": "Неверный логин или пароль"}), 401
+
+        # 2. Централизованный режим (Central Auth SSO)
         central_url = f"{config['central_auth_url'].rstrip('/')}/api/auth/verify"
         try:
             verify_ssl = config.get("verify_ssl", True)
@@ -218,19 +298,23 @@ def login_page():
                 res_data = resp.json()
                 if res_data.get("success"):
                     session["logged_in"] = True
-                    session["username"] = username
-                    log_action(username, "LOGIN", "Успешный вход в систему")
+                    session["username"] = res_data.get("username", username)
+                    session["role"] = res_data.get("role", "admin")
+                    session["auth_mode"] = "central"
+                    log_action(username, "LOGIN", f"Успешный вход через Central Auth ({session['role']})")
                     return jsonify({"success": True})
                 else:
+                    register_failed_login(request.remote_addr)
                     return jsonify({"error": res_data.get("error", "Неверные учетные данные")}), 401
             elif resp.status_code == 403:
                 return jsonify({"error": "Ошибка авторизации ноды на сервере авторизации"}), 403
             else:
+                register_failed_login(request.remote_addr)
                 return jsonify({"error": f"Ошибка сервера авторизации (код {resp.status_code})"}), 500
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"Не удалось связаться с сервером авторизации: {e}"}), 500
             
-    return render_template("login.html")
+    return render_template("login.html", auth_mode=config.get("auth_mode", "central"))
 
 @app.route('/logout')
 def logout():
@@ -238,11 +322,12 @@ def logout():
     log_action(username, "LOGOUT", "Выход из системы")
     session.pop("logged_in", None)
     session.pop("username", None)
+    session.pop("role", None)
     return redirect(url_for("login_page"))
 
 @app.route('/favicon.ico')
 def favicon():
-    svg_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#c52f31"><path d="M19 12h-2v3h-3v2h3v3h3v-3h2v-2h-2v-3zm-2-6H5c-1.11 0-2 .9-2 2v12c0 1.11.9 2 2 2h8v-2h-8V8h12v3h2V8c0-1.11-.9-2-2-2z"/></svg>'
+    svg_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3b82f6"><path d="M19 12h-2v3h-3v2h3v3h3v-3h2v-2h-2v-3zm-2-6H5c-1.11 0-2 .9-2 2v12c0 1.11.9 2 2 2h8v-2h-8V8h12v3h2V8c0-1.11-.9-2-2-2z"/></svg>'
     return Response(svg_icon, mimetype='image/svg+xml')
 
 @app.route('/')
@@ -544,9 +629,16 @@ def api_users_create():
     if not username or not password or not full_name:
         return jsonify({"error": "Логин, пароль и ФИО сотрудника обязательны"}), 400
         
-    # Защита от спецсимволов в имени пользователя (логине)
-    if not re.match(r"^[a-zA-Z0-9_.-]+$", username):
-        return jsonify({"error": "Недопустимые символы в логине пользователя"}), 400
+    valid_username = sanitize_username(username)
+    if not valid_username:
+        return jsonify({"error": "Недопустимые символы в логине пользователя (разрешены a-z, 0-9, _, ., - от 3 до 32 символов)"}), 400
+
+    valid_fullname = sanitize_fullname(full_name)
+    if not valid_fullname:
+        return jsonify({"error": "Недопустимые символы в ФИО (запрещены спецсимволы и переносы строк)"}), 400
+
+    username = valid_username
+    full_name = valid_fullname
         
     success, msg = create_samba_user(username, password, full_name)
     if success:
@@ -782,9 +874,16 @@ def api_users_edit():
     if not old_username or not new_username or not new_fullname:
         return jsonify({"error": "Все поля обязательны"}), 400
         
-    # Валидация логина
-    if not re.match(r"^[a-zA-Z0-9_.-]+$", new_username):
-        return jsonify({"error": "Недопустимые символы в логине пользователя"}), 400
+    valid_username = sanitize_username(new_username)
+    if not valid_username:
+        return jsonify({"error": "Недопустимые символы в новом логине пользователя"}), 400
+
+    valid_fullname = sanitize_fullname(new_fullname)
+    if not valid_fullname:
+        return jsonify({"error": "Недопустимые символы в новом ФИО пользователя"}), 400
+
+    new_username = valid_username
+    new_fullname = valid_fullname
         
     success, msg = rename_samba_user(old_username, new_username, new_fullname)
     if success:

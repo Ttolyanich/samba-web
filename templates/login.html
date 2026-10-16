@@ -31,7 +31,7 @@
             <div class="login-header">
                 <div class="logo-box big">S</div>
                 <h2>SAMBA <span class="accent-text">PANEL</span></h2>
-                <p>Вход в систему управления доступом</p>
+                <p>{% if auth_mode == 'standalone' %}Автономный режим (Standalone){% else %}Вход через Central Auth (SSO){% endif %}</p>
             </div>
             
             <form id="loginForm" onsubmit="handleLogin(event)">

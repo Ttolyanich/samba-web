@@ -1,17 +1,17 @@
-/* Глобальные переменные и дизайн-система (под стиль VPN) */
+/* Глобальные переменные и дизайн-система — Modern Enterprise SaaS */
 :root {
-    --bg-main: #0a0a0c;
-    --bg-card: #121216;
-    --bg-offset: #1e1e24;
-    --border-color: rgba(227, 71, 74, 0.12);
-    --border-hover: rgba(227, 71, 74, 0.35);
+    --bg-main: #0b1120;
+    --bg-card: #0f172a;
+    --bg-offset: #1e293b;
+    --border-color: rgba(148, 163, 184, 0.12);
+    --border-hover: rgba(59, 130, 246, 0.4);
     
-    --text-main: #ffffff;
-    --text-muted: #a1a1aa;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
     
-    --accent: #c52f31;
-    --accent-hover: #e3474a;
-    --accent-glow: rgba(197, 47, 49, 0.25);
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-glow: rgba(59, 130, 246, 0.25);
     
     --success: #10b981;
     --danger: #ef4444;
@@ -69,15 +69,15 @@ html {
     --bg-main: #f8fafc;
     --bg-card: #ffffff;
     --bg-offset: #f1f5f9;
-    --border-color: rgba(197, 47, 49, 0.15);
-    --border-hover: rgba(197, 47, 49, 0.4);
+    --border-color: #e2e8f0;
+    --border-hover: #3b82f6;
     
     --text-main: #0f172a;
     --text-muted: #64748b;
     
-    --accent: #c52f31;
-    --accent-hover: #a81e20;
-    --accent-glow: rgba(197, 47, 49, 0.15);
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-glow: rgba(37, 99, 235, 0.15);
     
     --warning-glow: rgba(245, 158, 11, 0.2);
 }
@@ -96,8 +96,8 @@ body {
     display: flex;
     flex-direction: column;
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(197, 47, 49, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 40%);
+        radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.06) 0%, transparent 40%);
     background-attachment: fixed;
 }
 

@@ -231,10 +231,41 @@ def system_user_exists(username):
     except Exception:
         return False
 
+def sanitize_username(username):
+    if not username:
+        return None
+    username = username.strip()
+    if not re.match(r"^[a-zA-Z0-9_.-]{3,32}$", username):
+        return None
+    return username
+
+def sanitize_fullname(full_name):
+    if not full_name:
+        return ""
+    # Удаляем любые управляющие символы, переносы строк, кавычки и двоеточия
+    cleaned = full_name.strip().replace('\r', '').replace('\n', '').replace(':', '').replace(';', '').replace('"', '').replace("'", '')
+    if not re.match(r"^[a-zA-Zа-яА-ЯёЁ0-9\s._-]{2,64}$", cleaned):
+        return None
+    return cleaned
+
 def create_samba_user(username, password, full_name=""):
     """
     Создает системного пользователя с полным именем и пользователя Samba
     """
+    clean_user = sanitize_username(username)
+    if not clean_user:
+        return False, "Недопустимые символы в логине пользователя (разрешены a-z, 0-9, _, ., - от 3 до 32 символов)"
+
+    clean_name = sanitize_fullname(full_name) if full_name else ""
+    if full_name and clean_name is None:
+        return False, "Недопустимые символы в ФИО (запрещены спецсимволы и переносы строк)"
+
+    if "\n" in password or "\r" in password:
+        return False, "Пароль не должен содержать символы переноса строки"
+
+    username = clean_user
+    full_name = clean_name or ""
+
     if not system_user_exists(username):
         try:
             # Создаем системного пользователя без домашней директории для входа (nologin)
@@ -303,6 +334,15 @@ def rename_samba_user(old_username, new_username, new_fullname):
     Переименовывает пользователя в Linux ОС и Samba passdb с сохранением хэша пароля,
     либо просто изменяет ФИО (если логин остался прежним).
     """
+    clean_new_user = sanitize_username(new_username)
+    if not clean_new_user:
+        return False, "Недопустимый новый логин пользователя"
+    clean_new_name = sanitize_fullname(new_fullname)
+    if clean_new_name is None:
+        return False, "Недопустимые символы в новом ФИО пользователя"
+    new_username = clean_new_user
+    new_fullname = clean_new_name
+
     if old_username == new_username:
         try:
             # Обновляем ФИО в ОС
