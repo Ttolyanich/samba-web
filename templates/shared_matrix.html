@@ -23,8 +23,8 @@
             --border-hover: #484852;
             --text-main: #f4f4f6;
             --text-muted: #9e9ea7;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
+            --accent: #e4e4e7;
+            --accent-hover: #ffffff;
             
             --success: #10b981;
             --danger: #ef4444;
@@ -41,8 +41,8 @@
             --text-main: #18181b;
             --text-muted: #6b7280;
             
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
+            --accent: #18181b;
+            --accent-hover: #09090b;
         }
 
         * {
@@ -81,7 +81,7 @@
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 8px;
-            color: var(--accent-hover);
+            color: var(--text-main);
         }
 
         .report-title p {
@@ -105,9 +105,9 @@
 
         /* Кнопка печати */
         .btn-print {
-            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-            color: white;
-            border: none;
+            background-color: #f4f4f5;
+            color: #141416;
+            border: 1px solid #ffffff;
             border-radius: 6px;
             padding: 10px 20px;
             font-size: 13px;
@@ -121,8 +121,20 @@
         }
 
         .btn-print:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.1);
+            background-color: #ffffff;
+            color: #000000;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+        }
+
+        .light-theme .btn-print {
+            background-color: #18181b;
+            color: #ffffff;
+            border: 1px solid #18181b;
+        }
+
+        .light-theme .btn-print:hover {
+            background-color: #27272a;
+            color: #ffffff;
         }
 
         /* Кнопка Excel */
