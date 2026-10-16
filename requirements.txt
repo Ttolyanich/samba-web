@@ -3,3 +3,5 @@ requests>=2.25.0
 openpyxl>=3.0.0
 python-dotenv>=1.0.0
 gunicorn>=21.0.0
+waitress>=2.1.2
+
