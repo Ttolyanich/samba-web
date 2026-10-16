@@ -846,7 +846,7 @@
                 
                 let actionBadge = `<span class="status-badge">${log.action}</span>`;
                 if (log.action === 'UPDATE_PERMISSIONS') {
-                    actionBadge = `<span class="status-badge active" style="background-color: rgba(59, 130, 246, 0.15); color: var(--accent);">Права</span>`;
+                    actionBadge = `<span class="status-badge" style="background-color: var(--bg-offset); color: var(--text-main); border: 1px solid var(--border-color);">Права</span>`;
                 } else if (log.action === 'CREATE_USER') {
                     actionBadge = `<span class="status-badge active" style="background-color: rgba(16, 185, 129, 0.15); color: var(--success);">Создание</span>`;
                 } else if (log.action === 'RESET_PASSWORD') {

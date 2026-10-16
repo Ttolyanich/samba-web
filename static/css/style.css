@@ -283,12 +283,14 @@ body {
 }
 
 .nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 14px 24px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 14px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-sizing: border-box;
 }
 
 .brand-zone {
@@ -339,11 +341,12 @@ body {
 
 /* Контейнер приложения */
 .main-container {
-    max-width: 1400px;
     width: 100%;
-    margin: 32px auto;
-    padding: 0 24px;
+    max-width: 100%;
+    margin: 24px 0;
+    padding: 0 32px;
     flex-grow: 1;
+    box-sizing: border-box;
 }
 
 /* Вкладки */
@@ -458,10 +461,11 @@ body {
     padding: 14px 24px;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
+    transition: background-color 0.15s ease;
 }
 
 .matrix-table tbody tr:hover td {
-    background-color: rgba(255, 255, 255, 0.008);
+    background-color: var(--bg-offset) !important;
 }
 
 /* Закрепление первого столбца матрицы (Общая папка / Путь) */
@@ -472,6 +476,7 @@ body {
     z-index: 10;
     background-color: var(--bg-card); /* Сплошной фон, чтобы имена пользователей не просвечивали */
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.35); /* Красивая тень справа */
+    transition: background-color 0.15s ease;
 }
 
 .matrix-table th:first-child {
@@ -480,7 +485,7 @@ body {
 }
 
 .matrix-table tbody tr:hover td:first-child {
-    background-color: #17171d !important; /* Подсветка при ховере */
+    background-color: var(--bg-offset) !important; /* Единая равномерная подсветка строки */
 }
 
 /* Инфо папки */
@@ -515,16 +520,19 @@ body {
     padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
+    display: inline-block;
 }
 
 .meta-badge.rw {
-    background-color: rgba(227, 71, 74, 0.1);
-    color: var(--accent-hover);
+    background-color: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .meta-badge.ro {
-    background-color: rgba(251, 191, 36, 0.08);
+    background-color: rgba(251, 191, 36, 0.1);
     color: var(--warning);
+    border: 1px solid rgba(251, 191, 36, 0.25);
 }
 
 /* Отображение пользователя в заголовке матрицы */
@@ -666,10 +674,11 @@ body {
     padding: 14px 20px;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
+    transition: background-color 0.15s ease;
 }
 
 .data-table tbody tr:hover td {
-    background-color: rgba(255, 255, 255, 0.008);
+    background-color: var(--bg-offset) !important;
 }
 
 .text-right {
@@ -1100,8 +1109,10 @@ body {
     background-color: #f1f5f9;
 }
 
-.light-theme .matrix-table tbody tr:hover td:first-child {
-    background-color: #f8fafc !important;
+.light-theme .matrix-table tbody tr:hover td,
+.light-theme .matrix-table tbody tr:hover td:first-child,
+.light-theme .data-table tbody tr:hover td {
+    background-color: var(--bg-offset) !important;
 }
 
 .light-theme .matrix-control {

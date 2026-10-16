@@ -60,9 +60,11 @@
         }
 
         .report-container {
-            max-width: 1400px;
+            max-width: 100%;
             width: 100%;
-            margin: 0 auto;
+            margin: 0;
+            padding: 0 16px;
+            box-sizing: border-box;
         }
 
         /* Заголовок отчета */
@@ -197,11 +199,12 @@
             padding: 16px 20px;
             border-bottom: 1px solid var(--border-color);
             vertical-align: middle;
+            transition: background-color 0.15s ease;
         }
 
         /* Поведение строк таблицы при ховере */
         .matrix-table tbody tr:hover td {
-            background-color: rgba(255, 255, 255, 0.008);
+            background-color: var(--bg-offset) !important;
         }
 
         /* Закрепление первого столбца матрицы (Общая папка / Путь) */
@@ -212,6 +215,7 @@
             z-index: 10;
             background-color: var(--bg-card); /* Сплошной фон, чтобы имена пользователей не просвечивали */
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.35); /* Красивая тень справа */
+            transition: background-color 0.15s ease;
         }
 
         .matrix-table th:first-child {
@@ -220,7 +224,7 @@
         }
 
         .matrix-table tbody tr:hover td:first-child {
-            background-color: #17171d !important; /* Подсветка при ховере */
+            background-color: var(--bg-offset) !important; /* Подсветка при ховере */
         }
 
         /* Данные папки */
@@ -491,8 +495,9 @@
             background-color: #f1f5f9;
         }
 
+        .light-theme .matrix-table tbody tr:hover td,
         .light-theme .matrix-table tbody tr:hover td:first-child {
-            background-color: #f8fafc !important;
+            background-color: var(--bg-offset) !important;
         }
 
         .light-theme .meta-info {
