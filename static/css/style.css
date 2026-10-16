@@ -1,17 +1,17 @@
-/* Глобальные переменные и дизайн-система — Modern Enterprise SaaS */
+/* Глобальные переменные и дизайн-система — Super Basic Dark & Crisp Light */
 :root {
-    --bg-main: #0b1120;
-    --bg-card: #0f172a;
-    --bg-offset: #1e293b;
-    --border-color: rgba(148, 163, 184, 0.12);
-    --border-hover: rgba(59, 130, 246, 0.4);
+    --bg-main: #141416;
+    --bg-card: #1c1c1f;
+    --bg-offset: #26262b;
+    --border-color: #2f2f35;
+    --border-hover: #484852;
     
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-main: #f4f4f6;
+    --text-muted: #9e9ea7;
     
     --accent: #3b82f6;
     --accent-hover: #2563eb;
-    --accent-glow: rgba(59, 130, 246, 0.25);
+    --accent-glow: rgba(59, 130, 246, 0.15);
     
     --success: #10b981;
     --danger: #ef4444;
@@ -64,22 +64,22 @@ html {
     background: rgba(0, 0, 0, 0.25);
 }
 
-/* Светлая тема */
+/* Светлая тема — чистый светлый стиль без затемнений */
 .light-theme {
-    --bg-main: #f8fafc;
+    --bg-main: #f6f7f9;
     --bg-card: #ffffff;
-    --bg-offset: #f1f5f9;
-    --border-color: #e2e8f0;
-    --border-hover: #3b82f6;
+    --bg-offset: #eff1f4;
+    --border-color: #e2e4e8;
+    --border-hover: #c4c7cf;
     
-    --text-main: #0f172a;
-    --text-muted: #64748b;
+    --text-main: #18181b;
+    --text-muted: #6b7280;
     
     --accent: #2563eb;
     --accent-hover: #1d4ed8;
-    --accent-glow: rgba(37, 99, 235, 0.15);
+    --accent-glow: rgba(37, 99, 235, 0.12);
     
-    --warning-glow: rgba(245, 158, 11, 0.2);
+    --warning-glow: rgba(245, 158, 11, 0.15);
 }
 
 * {
@@ -95,10 +95,6 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: 
-        radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.06) 0%, transparent 40%);
-    background-attachment: fixed;
 }
 
 /* Стилизация страницы входа (по аналогии с прошлым проектом) */
@@ -368,10 +364,10 @@ body {
 }
 
 .tab-btn.active {
-    background-color: rgba(197, 47, 49, 0.1);
-    color: var(--accent-hover);
+    background-color: var(--bg-offset);
+    color: var(--text-main);
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 12px rgba(197, 47, 49, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Панели-карточки */
@@ -588,9 +584,9 @@ body {
 }
 
 .matrix-btn.rw.active {
-    background-color: rgba(197, 47, 49, 0.18);
-    color: var(--accent-hover);
-    border: 1px solid rgba(197, 47, 49, 0.3);
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 /* Легенда матрицы */
@@ -633,9 +629,9 @@ body {
 }
 
 .legend-badge.rw {
-    background-color: rgba(197, 47, 49, 0.18);
-    color: var(--accent-hover);
-    border: 1px solid rgba(197, 47, 49, 0.3);
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 /* Обычные Таблицы (Пользователи, Логи) */
@@ -834,8 +830,8 @@ body {
 .modal-alert-icon {
     width: 36px;
     height: 36px;
-    background-color: rgba(197, 47, 49, 0.15);
-    color: var(--accent-hover);
+    background-color: rgba(59, 130, 246, 0.15);
+    color: var(--accent);
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
@@ -1077,9 +1073,7 @@ body {
 
 /* Специфичные перегрузки для светлой темы */
 .light-theme body {
-    background-image: 
-        radial-gradient(circle at 10% 20%, rgba(197, 47, 49, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.02) 0%, transparent 40%);
+    background-color: var(--bg-main);
 }
 
 .light-theme .brand-title,
@@ -1184,9 +1178,9 @@ body {
 }
 
 .light-theme .glass {
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(197, 47, 49, 0.15);
-    box-shadow: 0 8px 32px 0 rgba(197, 47, 49, 0.08);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
 }
 
 .light-theme .login-header h2 {

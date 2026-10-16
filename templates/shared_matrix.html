@@ -14,15 +14,17 @@
         }
     </script>
     <style>
-        /* Тема оформления (совпадает с Crimson Red) */
+        /* Тема оформления — Super Basic Dark & Crisp Light */
         :root {
-            --bg-main: #0a0a0c;
-            --bg-card: #121216;
-            --border-color: rgba(227, 71, 74, 0.12);
-            --text-main: #ffffff;
-            --text-muted: #a1a1aa;
-            --accent: #c52f31;
-            --accent-hover: #e3474a;
+            --bg-main: #141416;
+            --bg-card: #1c1c1f;
+            --bg-offset: #26262b;
+            --border-color: #2f2f35;
+            --border-hover: #484852;
+            --text-main: #f4f4f6;
+            --text-muted: #9e9ea7;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
             
             --success: #10b981;
             --danger: #ef4444;
@@ -31,14 +33,16 @@
 
         /* Светлая тема */
         .light-theme {
-            --bg-main: #f8fafc;
+            --bg-main: #f6f7f9;
             --bg-card: #ffffff;
-            --border-color: rgba(197, 47, 49, 0.15);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
+            --bg-offset: #eff1f4;
+            --border-color: #e2e4e8;
+            --border-hover: #c4c7cf;
+            --text-main: #18181b;
+            --text-muted: #6b7280;
             
-            --accent: #c52f31;
-            --accent-hover: #a81e20;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
         }
 
         * {
@@ -110,7 +114,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(197, 47, 49, 0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -258,9 +262,9 @@
         }
 
         .perm-badge.rw {
-            background-color: rgba(197, 47, 49, 0.15);
-            color: var(--accent-hover);
-            border: 1px solid rgba(197, 47, 49, 0.25);
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.25);
         }
 
         .perm-badge.ro {
@@ -454,9 +458,7 @@
 
         /* Специфичные перегрузки для светлой темы */
         .light-theme body {
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(197, 47, 49, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.02) 0%, transparent 40%);
+            background-color: var(--bg-main);
         }
 
         .light-theme .report-title h1 {

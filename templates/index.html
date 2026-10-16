@@ -281,7 +281,7 @@
                 <div id="generatedLinkContainer" class="hidden" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
                     <label style="display:block; font-size:12px; color:var(--success); font-weight:600; margin-bottom:8px;">Ссылка успешно создана:</label>
                     <div class="input-with-action">
-                        <input type="text" id="generatedLinkUrl" readonly style="background: rgba(0,0,0,0.4); border-color: rgba(16, 185, 129, 0.3);">
+                        <input type="text" id="generatedLinkUrl" readonly style="background: var(--bg-offset); border-color: rgba(16, 185, 129, 0.3);">
                         <button type="button" class="btn-secondary" onclick="copyGeneratedLink()">Копировать</button>
                     </div>
                 </div>
@@ -846,7 +846,7 @@
                 
                 let actionBadge = `<span class="status-badge">${log.action}</span>`;
                 if (log.action === 'UPDATE_PERMISSIONS') {
-                    actionBadge = `<span class="status-badge active" style="background-color: rgba(197, 47, 49, 0.15); color: var(--accent-hover);">Права</span>`;
+                    actionBadge = `<span class="status-badge active" style="background-color: rgba(59, 130, 246, 0.15); color: var(--accent);">Права</span>`;
                 } else if (log.action === 'CREATE_USER') {
                     actionBadge = `<span class="status-badge active" style="background-color: rgba(16, 185, 129, 0.15); color: var(--success);">Создание</span>`;
                 } else if (log.action === 'RESET_PASSWORD') {
