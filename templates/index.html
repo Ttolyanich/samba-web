@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
-        // Немедленно применяем сохраненную тему до отрисовки интерфейса
-        const savedTheme = localStorage.getItem('theme');
+        // Немедленно применяем сохраненную тему до отрисовки интерфейса (по умолчанию light)
+        const savedTheme = localStorage.getItem('theme') || 'light';
         if (savedTheme === 'light') {
             document.documentElement.classList.add('light-theme');
         }
@@ -17,58 +17,110 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="brand-zone">
-                <div class="logo-box">S</div>
-                <span class="brand-title">SAMBA <span class="accent-text">PANEL</span></span>
-            </div>
-            <div class="user-profile-zone">
-                <button id="theme-toggle" class="btn-icon-toggle" title="Переключить тему">
-                    <!-- Sun Icon (shown in dark theme) -->
-                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                    <!-- Moon Icon (shown in light theme) -->
-                    <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+<div class="app-layout">
+    <!-- Левый сайдбар (Enterprise Navigation) -->
+    <aside class="app-sidebar">
+        <div class="sidebar-brand">
+            <svg class="brand-wave-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 20C8 14 12 13 16 16C20 19 24 18 27 12" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 12C8 6 12 5 16 8C20 11 24 10 27 4" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" id="navItemDashboard" onclick="switchNavTab('matrixTab')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Dashboard</span>
+            </a>
+            <a class="nav-item active" id="navItemShares" onclick="switchNavTab('matrixTab')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <span>Samba Shares</span>
+            </a>
+            <a class="nav-item" id="navItemVpn" href="/openvpn" target="_blank" title="Открыть OpenVPN Gateway">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                <span>OpenVPN Clients</span>
+            </a>
+            <a class="nav-item" id="navItemLdap" href="/auth" target="_blank" title="Открыть Central Auth / LDAP Portal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>LDAP Sync</span>
+            </a>
+            <a class="nav-item" id="navItemAudit" onclick="switchNavTab('auditTab')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>Audit Logs</span>
+            </a>
+            <a class="nav-item" id="navItemSettings" onclick="switchNavTab('usersTab')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button id="theme-toggle" class="header-icon-btn" title="Сменить тему">
+                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">v2.4.0</span>
+        </div>
+    </aside>
+
+    <!-- Основная рабочая область -->
+    <div class="app-main-area">
+        <!-- Верхняя шапка -->
+        <header class="app-top-header">
+            <div class="header-left-title">Profiles</div>
+            <div class="header-right-actions">
+                <button class="header-icon-btn" title="Сообщения">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 </button>
-                <span id="currentUserSpan" class="current-user-name">Загрузка...</span>
-                <button onclick="handleLogout()" class="btn-logout">Выйти</button>
+                <button class="header-icon-btn" title="Уведомления">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span class="notification-dot"></span>
+                </button>
+                <div class="header-user-badge">
+                    <div class="user-avatar-circle" id="userAvatarText">A</div>
+                    <span id="currentUserSpan" style="font-size: 13px; font-weight: 600; color: var(--text-main);">admin</span>
+                    <button onclick="handleLogout()" class="header-icon-btn" title="Выйти" style="margin-left: 4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
             </div>
-        </div>
-    </nav>
+        </header>
 
+        <!-- Рабочее пространство: Контент + Правый Flyout Drawer -->
+        <div class="app-content-wrapper">
+            <div class="app-content-body">
+                <div class="breadcrumbs">
+                    <span>Enterprise Infrastructure</span> <span class="bc-sep">/</span> <span class="bc-current">Samba &amp; VPN Matrix</span>
+                </div>
+                <h1 class="page-heading">Samba &amp; OpenVPN Access Hub</h1>
 
-
-
-    <main class="main-container">
-        
-        <!-- Вкладки навигации -->
-        <div class="tabs-container">
-            <button id="tabMatrixBtn" class="tab-btn active" onclick="switchTab('matrixTab')">Матрица доступа</button>
-            <button id="tabUsersBtn" class="tab-btn" onclick="switchTab('usersTab')">Пользователи Samba</button>
-            <button id="tabAuditBtn" class="tab-btn" onclick="switchTab('auditTab')">Журнал аудита</button>
-        </div>
-
-        <!-- Содержимое вкладок -->
-        <div class="tab-content" id="matrixTab">
-            <div class="panel-card">
-                <div class="card-header table-actions">
-                    <div>
-                        <h2 class="header-title uppercase-accent">Матрица прав доступа</h2>
-                        <p class="header-subtitle font-mono">Назначение прав на каталоги Samba через системные группы. Изменения применяются мгновенно.</p>
+                <!-- Панель фильтров Hub в точном стиле макета -->
+                <div class="hub-action-bar">
+                    <div class="search-box-pill">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="matrixSearch" oninput="renderMatrixTable()" placeholder="Search users, groups, or folders...">
                     </div>
-                    <div class="filter-zone">
-                        <div class="search-wrapper">
-                            <input type="text" id="matrixSearch" oninput="renderMatrixTable()" placeholder="Поиск сотрудника...">
-                        </div>
-                        <button class="btn-action-reset" style="background-color: var(--bg-offset); border-color: var(--border-color); color: var(--text-main);" onclick="openShareLinkModal()">Поделиться отчетом</button>
-                        <button class="btn-excel" onclick="downloadExcel()">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                            Экспорт в Excel
+                    <div class="filter-dropdown-pill">
+                        <select id="departmentFilter" onchange="renderMatrixTable()">
+                            <option value="">Filter by Department</option>
+                            <option value="all">All Departments</option>
+                            <option value="accounting">Accounting</option>
+                            <option value="engineering">Engineering</option>
+                        </select>
+                    </div>
+                    <div class="hub-btn-group">
+                        <button class="btn-export-excel" onclick="downloadExcel()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Export Excel
+                        </button>
+                        <button class="btn-share-link" onclick="openShareLinkModal()">
+                            Share Report Link
                         </button>
                     </div>
                 </div>
-                
-                <div class="table-outer-wrapper">
+
+                <!-- Содержимое вкладок -->
+                <div class="tab-content" id="matrixTab">
+                    <div class="panel-card" style="box-shadow: none; border: 1px solid var(--border-color);">
+                        <div class="table-outer-wrapper">
                     <div class="table-wrapper">
                         <table class="matrix-table" id="matrixTable">
                             <thead>
@@ -153,10 +205,67 @@
                             <tr><td colspan="4" class="text-center py-4 text-muted">Загрузка логов...</td></tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
         </div>
-    </main>
+            </div>
+
+            <!-- Правый Flyout Drawer (User Profile) точно как на макете -->
+            <aside class="user-flyout-drawer" id="userFlyoutDrawer">
+                <div class="drawer-header">
+                    <div>
+                        <div class="drawer-title">User Profile:</div>
+                        <div class="drawer-subtitle" id="drawerUserEmail">alex.miller@corp.internal</div>
+                    </div>
+                    <button class="drawer-close-btn" onclick="closeUserFlyout()" title="Закрыть панель">✕</button>
+                </div>
+                <div class="drawer-body">
+                    <div class="drawer-card ldap-card">
+                        <div class="drawer-card-label">LDAP sync status</div>
+                        <div class="drawer-status-pill success">
+                            <span class="status-dot-green">●</span> Active Synced
+                        </div>
+                    </div>
+
+                    <div class="drawer-section">
+                        <div class="drawer-section-title">Groups</div>
+                        <div class="drawer-chips-container" id="drawerGroupsContainer">
+                            <span class="chip-pill" id="drawerPrimaryGroup">alex.miller@corp.internal</span>
+                            <span class="chip-pill" id="drawerRoleGroup">engineering group</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-download-vpn" onclick="downloadDrawerVpnConfig()">
+                        Download OpenVPN Config (.ovpn)
+                    </button>
+
+                    <div class="drawer-section">
+                        <div class="drawer-section-title">Connection Stats</div>
+                        <div class="stats-row">
+                            <span>IP Connection</span>
+                            <strong id="drawerConnectionCount">68</strong>
+                        </div>
+                        <div class="stats-progress-bar">
+                            <div class="stats-progress-fill" style="width: 68%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="drawer-section">
+                        <div class="drawer-section-title">IP Allocation</div>
+                        <div class="stats-row">
+                            <span>IP Allocated</span>
+                            <strong id="drawerAllocatedIp" class="font-mono">192.168.10.24</strong>
+                        </div>
+                    </div>
+
+                    <div class="drawer-section" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                        <button class="btn-action-reset" style="width: 100%; justify-content: center; padding: 10px;" id="drawerResetPasswordBtn" onclick="openResetPasswordModal(currentFlyoutUsername || 'admin')">
+                            🔑 Сбросить пароль Samba
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
 
     <!-- Модальное окно создания пользователя -->
     <div class="modal-overlay hidden" id="createUserModal">
@@ -322,19 +431,81 @@
         let auditLogs = [];
         let collapsedState = {};
 
+        // Управление боковой панелью Hub и вкладками
+        let currentFlyoutUsername = null;
+
+        function switchNavTab(tabId) {
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
+            if (tabId === 'matrixTab') {
+                const el = document.getElementById('navItemShares');
+                if (el) el.classList.add('active');
+            } else if (tabId === 'usersTab') {
+                const el = document.getElementById('navItemSettings');
+                if (el) el.classList.add('active');
+            } else if (tabId === 'auditTab') {
+                const el = document.getElementById('navItemAudit');
+                if (el) el.classList.add('active');
+            }
+            switchTab(tabId);
+        }
+
+        function openUserFlyout(user) {
+            if (!user) return;
+            const drawer = document.getElementById('userFlyoutDrawer');
+            if (!drawer) return;
+            drawer.classList.remove('hidden');
+
+            const uname = typeof user === 'string' ? user : user.username;
+            const fullName = (typeof user === 'object' && user.full_name) ? user.full_name : uname;
+            currentFlyoutUsername = uname;
+
+            const emailElem = document.getElementById('drawerUserEmail');
+            if (emailElem) {
+                emailElem.innerText = uname.includes('@') ? uname : `${uname}@corp.internal`;
+            }
+
+            const primaryGroupElem = document.getElementById('drawerPrimaryGroup');
+            if (primaryGroupElem) {
+                primaryGroupElem.innerText = uname.includes('@') ? uname : `${uname}@corp.internal`;
+            }
+
+            const roleGroupElem = document.getElementById('drawerRoleGroup');
+            if (roleGroupElem) {
+                roleGroupElem.innerText = fullName && fullName !== uname ? fullName : 'engineering group';
+            }
+
+            // Стабильный псевдо-IP и статистика
+            let hash = 0;
+            for (let i = 0; i < uname.length; i++) hash = (hash * 31 + uname.charCodeAt(i)) & 0xff;
+            const allocatedIp = `192.168.10.${(hash % 200) + 10}`;
+            const connCount = (hash % 50) + 30;
+
+            const ipElem = document.getElementById('drawerAllocatedIp');
+            if (ipElem) ipElem.innerText = allocatedIp;
+
+            const connElem = document.getElementById('drawerConnectionCount');
+            if (connElem) connElem.innerText = connCount;
+        }
+
+        function closeUserFlyout() {
+            const drawer = document.getElementById('userFlyoutDrawer');
+            if (drawer) drawer.classList.add('hidden');
+        }
+
+        function downloadDrawerVpnConfig() {
+            if (!currentFlyoutUsername) return;
+            showToast(`Загрузка VPN конфигурации для ${currentFlyoutUsername}...`);
+            window.open(`/openvpn/api/clients/${encodeURIComponent(currentFlyoutUsername)}/download`, '_blank');
+        }
+
         // Переключение вкладок
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(tabId).classList.remove('hidden');
+            const targetEl = document.getElementById(tabId);
+            if (targetEl) targetEl.classList.remove('hidden');
             
-            // Находим активную кнопку по её id
-            let btnId = 'tabMatrixBtn';
-            if (tabId === 'usersTab') btnId = 'tabUsersBtn';
-            if (tabId === 'auditTab') btnId = 'tabAuditBtn';
-            document.getElementById(btnId).classList.add('active');
-
             if (tabId === 'matrixTab') loadMatrixData();
             if (tabId === 'usersTab') loadUsersData();
             if (tabId === 'auditTab') loadAuditLogs();
@@ -374,7 +545,10 @@
                 const res = await fetch('./api/status');
                 const data = await res.json();
                 if (res.ok) {
-                    document.getElementById('currentUserSpan').innerText = `Оператор: ${data.username}`;
+                    const span = document.getElementById('currentUserSpan');
+                    if (span) span.innerText = data.username;
+                    const avatar = document.getElementById('userAvatarText');
+                    if (avatar) avatar.innerText = (data.username || 'A')[0].toUpperCase();
                 }
             } catch (err) {
                 console.error("Error loading status:", err);
@@ -435,7 +609,7 @@
             const tbody = document.getElementById('matrixBody');
 
             // Очищаем заголовки, оставляя первый
-            header.innerHTML = '<th>Общая папка / Путь</th>';
+            header.innerHTML = '<th>Folder</th>';
             
             // Фильтр по поисковому запросу
             const searchQuery = document.getElementById('matrixSearch') ? document.getElementById('matrixSearch').value.toLowerCase().trim() : '';
@@ -448,15 +622,22 @@
                        (u.full_name && u.full_name.toLowerCase().includes(searchQuery));
             });
 
-            activeUsers.forEach(user => {
+            activeUsers.forEach((user, idx) => {
                 const th = document.createElement('th');
+                th.style.cursor = 'pointer';
+                th.title = 'Нажмите, чтобы открыть карточку профиля сотрудника';
+                th.onclick = () => openUserFlyout(user);
                 th.innerHTML = `
                     <div class="user-header-info">
-                        <span class="user-header-fullname" title="${user.full_name || user.username}">${user.full_name || '—'}</span>
+                        <span class="user-header-fullname">${user.full_name || user.username}</span>
                         <span class="user-header-username">${user.username}</span>
                     </div>
                 `;
                 header.appendChild(th);
+
+                if (idx === 0 && !currentFlyoutUsername) {
+                    openUserFlyout(user);
+                }
             });
 
             if (sharesData.length === 0) {
@@ -523,16 +704,16 @@
                     } else {
                         tdPerm.innerHTML = `
                             <div class="matrix-control">
-                                <button class="matrix-btn none ${currentAccess === 'none' ? 'active' : ''}" 
+                                <button class="badge-pill none matrix-btn ${currentAccess === 'none' ? 'active' : ''}" 
                                         onclick="updatePermission('${user.username}', '${share.name}', 'none')" 
-                                        title="Нет доступа">—</button>
+                                        title="Нет доступа">No Access</button>
                                 ${share.ro_group ? `
-                                <button class="matrix-btn ro ${currentAccess === 'ro' ? 'active' : ''}" 
+                                <button class="badge-pill ro matrix-btn ${currentAccess === 'ro' ? 'active' : ''}" 
                                         onclick="updatePermission('${user.username}', '${share.name}', 'ro')" 
                                         title="Только чтение">RO</button>
                                 ` : ''}
                                 ${share.rw_group ? `
-                                <button class="matrix-btn rw ${currentAccess === 'rw' ? 'active' : ''}" 
+                                <button class="badge-pill rw matrix-btn ${currentAccess === 'rw' ? 'active' : ''}" 
                                         onclick="updatePermission('${user.username}', '${share.name}', 'rw')" 
                                         title="Чтение и запись">RW</button>
                                 ` : ''}
