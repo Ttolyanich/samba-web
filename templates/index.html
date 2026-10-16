@@ -27,37 +27,38 @@
             </svg>
         </div>
         <nav class="sidebar-nav">
-            <a class="nav-item" id="navItemDashboard" onclick="switchNavTab('matrixTab')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                <span>Dashboard</span>
-            </a>
             <a class="nav-item active" id="navItemShares" onclick="switchNavTab('matrixTab')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                <span>Samba Shares</span>
+                <span>Матрица прав</span>
             </a>
+            <a class="nav-item" id="navItemUsers" onclick="switchNavTab('usersTab')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Пользователи Samba</span>
+            </a>
+            <a class="nav-item" id="navItemAudit" onclick="switchNavTab('auditTab')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>Журнал аудита</span>
+            </a>
+            <a class="nav-item" onclick="openCreateUserModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <span>Новый пользователь</span>
+            </a>
+            <a class="nav-item" onclick="openShareLinkModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span>Временные ссылки</span>
+            </a>
+            <div style="height: 1px; background: var(--border-color); margin: 8px 12px;"></div>
             <a class="nav-item" id="navItemVpn" href="/openvpn" target="_blank" title="Открыть OpenVPN Gateway">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
                 <span>OpenVPN Clients</span>
             </a>
             <a class="nav-item" id="navItemLdap" href="/auth" target="_blank" title="Открыть Central Auth / LDAP Portal">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                <span>LDAP Sync</span>
-            </a>
-            <a class="nav-item" id="navItemAudit" onclick="switchNavTab('auditTab')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <span>Audit Logs</span>
-            </a>
-            <a class="nav-item" id="navItemSettings" onclick="switchNavTab('usersTab')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                <span>Settings</span>
+                <span>Центр авторизации</span>
             </a>
         </nav>
         <div class="sidebar-footer">
-            <button id="theme-toggle" class="header-icon-btn" title="Сменить тему">
-                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            </button>
-            <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">v2.4.0</span>
+            <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">Samba Hub v2.4</span>
         </div>
     </aside>
 
@@ -65,14 +66,11 @@
     <div class="app-main-area">
         <!-- Верхняя шапка -->
         <header class="app-top-header">
-            <div class="header-left-title">Profiles</div>
+            <div class="header-left-title">Управление общими ресурсами Samba</div>
             <div class="header-right-actions">
-                <button class="header-icon-btn" title="Сообщения">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                </button>
-                <button class="header-icon-btn" title="Уведомления">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    <span class="notification-dot"></span>
+                <button id="theme-toggle" class="header-icon-btn" title="Сменить тему оформления">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 </button>
                 <div class="header-user-badge">
                     <div class="user-avatar-circle" id="userAvatarText">A</div>
@@ -88,31 +86,34 @@
         <div class="app-content-wrapper">
             <div class="app-content-body">
                 <div class="breadcrumbs">
-                    <span>Enterprise Infrastructure</span> <span class="bc-sep">/</span> <span class="bc-current">Samba &amp; VPN Matrix</span>
+                    <span>Инфраструктура</span> <span class="bc-sep">/</span> <span class="bc-current">Samba &amp; VPN Matrix</span>
                 </div>
                 <h1 class="page-heading">Samba &amp; OpenVPN Access Hub</h1>
 
-                <!-- Панель фильтров Hub в точном стиле макета -->
+                <!-- Панель фильтров Hub -->
                 <div class="hub-action-bar">
                     <div class="search-box-pill">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="matrixSearch" oninput="renderMatrixTable()" placeholder="Search users, groups, or folders...">
+                        <input type="text" id="matrixSearch" oninput="renderMatrixTable()" placeholder="Поиск по логину, ФИО или названию ресурса...">
                     </div>
                     <div class="filter-dropdown-pill">
-                        <select id="departmentFilter" onchange="renderMatrixTable()">
-                            <option value="">Filter by Department</option>
-                            <option value="all">All Departments</option>
-                            <option value="accounting">Accounting</option>
-                            <option value="engineering">Engineering</option>
+                        <select id="accessFilter" onchange="renderMatrixTable()">
+                            <option value="all">Все пользователи</option>
+                            <option value="has_access">Только с доступом (RW / RO)</option>
+                            <option value="rw_only">Только Чтение и Запись (RW)</option>
+                            <option value="ro_only">Только Чтение (RO)</option>
                         </select>
                     </div>
                     <div class="hub-btn-group">
-                        <button class="btn-export-excel" onclick="downloadExcel()">
+                        <button class="btn-export-excel" onclick="downloadExcel()" title="Экспорт матрицы прав в Excel">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                            Export Excel
+                            Экспорт в Excel
                         </button>
-                        <button class="btn-share-link" onclick="openShareLinkModal()">
-                            Share Report Link
+                        <button class="btn-share-link" onclick="openShareLinkModal()" title="Сгенерировать безопасную ссылку для аудитора">
+                            Временная ссылка
+                        </button>
+                        <button class="btn-submit" onclick="openCreateUserModal()" style="padding: 7px 14px; font-size: 13px;" title="Создать нового пользователя Samba">
+                            + Пользователь
                         </button>
                     </div>
                 </div>
@@ -208,57 +209,47 @@
         </div>
             </div>
 
-            <!-- Правый Flyout Drawer (User Profile) точно как на макете -->
-            <aside class="user-flyout-drawer" id="userFlyoutDrawer">
+            <!-- Правый Flyout Drawer (Профиль пользователя Samba) -->
+            <aside class="user-flyout-drawer hidden" id="userFlyoutDrawer">
                 <div class="drawer-header">
                     <div>
-                        <div class="drawer-title">User Profile:</div>
-                        <div class="drawer-subtitle" id="drawerUserEmail">alex.miller@corp.internal</div>
+                        <div class="drawer-title">Профиль пользователя Samba:</div>
+                        <div class="drawer-subtitle font-mono" id="drawerUsername">—</div>
                     </div>
                     <button class="drawer-close-btn" onclick="closeUserFlyout()" title="Закрыть панель">✕</button>
                 </div>
                 <div class="drawer-body">
-                    <div class="drawer-card ldap-card">
-                        <div class="drawer-card-label">LDAP sync status</div>
-                        <div class="drawer-status-pill success">
-                            <span class="status-dot-green">●</span> Active Synced
+                    <div class="drawer-card">
+                        <div class="drawer-card-label">ФИО сотрудника</div>
+                        <div style="font-size: 15px; font-weight: 600; color: var(--text-main);" id="drawerFullName">—</div>
+                    </div>
+
+                    <div class="drawer-card">
+                        <div class="drawer-card-label">Статус учетной записи в Samba</div>
+                        <div id="drawerAccountStatus" class="drawer-status-pill success">
+                            <span id="drawerStatusText">Активен</span>
                         </div>
                     </div>
 
                     <div class="drawer-section">
-                        <div class="drawer-section-title">Groups</div>
-                        <div class="drawer-chips-container" id="drawerGroupsContainer">
-                            <span class="chip-pill" id="drawerPrimaryGroup">alex.miller@corp.internal</span>
-                            <span class="chip-pill" id="drawerRoleGroup">engineering group</span>
+                        <div class="drawer-section-title">Права доступа к папкам ({{ hostname }})</div>
+                        <div id="drawerSharesAccessList" style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;">
+                            <!-- Заполняется динамически списком ресурсов с реальными бейджами RW / RO -->
                         </div>
                     </div>
 
-                    <button class="btn-download-vpn" onclick="downloadDrawerVpnConfig()">
-                        Download OpenVPN Config (.ovpn)
-                    </button>
-
-                    <div class="drawer-section">
-                        <div class="drawer-section-title">Connection Stats</div>
-                        <div class="stats-row">
-                            <span>IP Connection</span>
-                            <strong id="drawerConnectionCount">68</strong>
-                        </div>
-                        <div class="stats-progress-bar">
-                            <div class="stats-progress-fill" style="width: 68%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="drawer-section">
-                        <div class="drawer-section-title">IP Allocation</div>
-                        <div class="stats-row">
-                            <span>IP Allocated</span>
-                            <strong id="drawerAllocatedIp" class="font-mono">192.168.10.24</strong>
-                        </div>
-                    </div>
-
-                    <div class="drawer-section" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                        <button class="btn-action-reset" style="width: 100%; justify-content: center; padding: 10px;" id="drawerResetPasswordBtn" onclick="openResetPasswordModal(currentFlyoutUsername || 'admin')">
+                    <div class="drawer-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn-action-reset" style="width: 100%; justify-content: center; padding: 10px;" id="drawerResetPasswordBtn" onclick="openResetPasswordModal(currentFlyoutUsername)">
                             🔑 Сбросить пароль Samba
+                        </button>
+                        <button class="btn-action-toggle" style="width: 100%; justify-content: center; padding: 10px;" id="drawerToggleStatusBtn" onclick="toggleDrawerUserStatus()">
+                            🔒 Заблокировать
+                        </button>
+                        <button class="btn-action-rebuild" style="width: 100%; justify-content: center; padding: 10px;" id="drawerEditUserBtn" onclick="editDrawerUser()">
+                            ✎ Редактировать сотрудника
+                        </button>
+                        <button class="btn-action-delete" style="width: 100%; justify-content: center; padding: 10px;" id="drawerDeleteUserBtn" onclick="deleteDrawerUser()">
+                            ✕ Удалить пользователя
                         </button>
                     </div>
                 </div>
@@ -440,7 +431,7 @@
                 const el = document.getElementById('navItemShares');
                 if (el) el.classList.add('active');
             } else if (tabId === 'usersTab') {
-                const el = document.getElementById('navItemSettings');
+                const el = document.getElementById('navItemUsers');
                 if (el) el.classList.add('active');
             } else if (tabId === 'auditTab') {
                 const el = document.getElementById('navItemAudit');
@@ -456,35 +447,61 @@
             drawer.classList.remove('hidden');
 
             const uname = typeof user === 'string' ? user : user.username;
-            const fullName = (typeof user === 'object' && user.full_name) ? user.full_name : uname;
+            const userObj = typeof user === 'object' ? user : (usersData.find(u => u.username === uname) || { username: uname, full_name: uname, disabled: false });
+            const fullName = userObj.full_name || uname;
+            const isDisabled = !!userObj.disabled;
             currentFlyoutUsername = uname;
 
-            const emailElem = document.getElementById('drawerUserEmail');
-            if (emailElem) {
-                emailElem.innerText = uname.includes('@') ? uname : `${uname}@corp.internal`;
+            const unameElem = document.getElementById('drawerUsername');
+            if (unameElem) unameElem.innerText = uname;
+
+            const fullNameElem = document.getElementById('drawerFullName');
+            if (fullNameElem) fullNameElem.innerText = fullName;
+
+            const statusPill = document.getElementById('drawerAccountStatus');
+            const statusText = document.getElementById('drawerStatusText');
+            if (statusPill && statusText) {
+                if (isDisabled) {
+                    statusPill.className = 'drawer-status-pill danger';
+                    statusText.innerText = 'Заблокирован';
+                } else {
+                    statusPill.className = 'drawer-status-pill success';
+                    statusText.innerText = 'Активен';
+                }
             }
 
-            const primaryGroupElem = document.getElementById('drawerPrimaryGroup');
-            if (primaryGroupElem) {
-                primaryGroupElem.innerText = uname.includes('@') ? uname : `${uname}@corp.internal`;
+            const toggleBtn = document.getElementById('drawerToggleStatusBtn');
+            if (toggleBtn) {
+                toggleBtn.innerText = isDisabled ? '🔓 Разблокировать' : '🔒 Заблокировать';
             }
 
-            const roleGroupElem = document.getElementById('drawerRoleGroup');
-            if (roleGroupElem) {
-                roleGroupElem.innerText = fullName && fullName !== uname ? fullName : 'engineering group';
+            // Наполняем реальный список прав доступа к папкам
+            const accessListElem = document.getElementById('drawerSharesAccessList');
+            if (accessListElem) {
+                const userPerms = matrixData[uname] || {};
+                let sharesHtml = '';
+                let hasAccessCount = 0;
+                sharesData.forEach(share => {
+                    const perm = userPerms[share.name];
+                    if (perm === 'rw' || perm === 'ro') {
+                        hasAccessCount++;
+                        const badgeClass = perm === 'rw' ? 'badge-pill rw' : 'badge-pill ro';
+                        sharesHtml += `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; font-size: 13px;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-family: monospace; font-weight: 600; color: var(--text-main);">${share.name}</span>
+                                    <span style="font-size: 11px; color: var(--text-muted);">${share.path || ''}</span>
+                                </div>
+                                <span class="${badgeClass}" style="padding: 2px 8px; font-size: 11px; font-weight: 600;">${perm.toUpperCase()}</span>
+                            </div>
+                        `;
+                    }
+                });
+                if (hasAccessCount === 0) {
+                    sharesHtml = '<div style="color: var(--text-muted); font-size: 13px; font-style: italic; padding: 8px 0;">Индивидуальные права на общие папки не назначены</div>';
+                }
+                accessListElem.innerHTML = sharesHtml;
             }
-
-            // Стабильный псевдо-IP и статистика
-            let hash = 0;
-            for (let i = 0; i < uname.length; i++) hash = (hash * 31 + uname.charCodeAt(i)) & 0xff;
-            const allocatedIp = `192.168.10.${(hash % 200) + 10}`;
-            const connCount = (hash % 50) + 30;
-
-            const ipElem = document.getElementById('drawerAllocatedIp');
-            if (ipElem) ipElem.innerText = allocatedIp;
-
-            const connElem = document.getElementById('drawerConnectionCount');
-            if (connElem) connElem.innerText = connCount;
         }
 
         function closeUserFlyout() {
@@ -492,10 +509,26 @@
             if (drawer) drawer.classList.add('hidden');
         }
 
-        function downloadDrawerVpnConfig() {
+        async function toggleDrawerUserStatus() {
             if (!currentFlyoutUsername) return;
-            showToast(`Загрузка VPN конфигурации для ${currentFlyoutUsername}...`);
-            window.open(`/openvpn/api/clients/${encodeURIComponent(currentFlyoutUsername)}/download`, '_blank');
+            const userObj = usersData.find(u => u.username === currentFlyoutUsername);
+            const currentDisabled = userObj ? !!userObj.disabled : false;
+            await handleToggleStatus(currentFlyoutUsername, !currentDisabled);
+            const updated = usersData.find(u => u.username === currentFlyoutUsername);
+            if (updated) openUserFlyout(updated);
+        }
+
+        function editDrawerUser() {
+            if (!currentFlyoutUsername) return;
+            const userObj = usersData.find(u => u.username === currentFlyoutUsername);
+            if (userObj) openEditUserModal(userObj);
+        }
+
+        async function deleteDrawerUser() {
+            if (!currentFlyoutUsername) return;
+            const uname = currentFlyoutUsername;
+            closeUserFlyout();
+            await handleDeleteUser(uname);
         }
 
         // Переключение вкладок
@@ -609,17 +642,28 @@
             const tbody = document.getElementById('matrixBody');
 
             // Очищаем заголовки, оставляя первый
-            header.innerHTML = '<th>Folder</th>';
+            header.innerHTML = '<th>Общая папка / Путь</th>';
             
-            // Фильтр по поисковому запросу
+            // Фильтр по поисковому запросу и правам доступа
             const searchQuery = document.getElementById('matrixSearch') ? document.getElementById('matrixSearch').value.toLowerCase().trim() : '';
+            const accessFilter = document.getElementById('accessFilter') ? document.getElementById('accessFilter').value : 'all';
             
-            // Фильтруем только активных пользователей для матрицы
+            // Фильтруем только активных пользователей для матрицы с учетом поиска и прав доступа
             const activeUsers = usersData.filter(u => {
                 if (u.disabled) return false;
-                if (!searchQuery) return true;
-                return u.username.toLowerCase().includes(searchQuery) || 
-                       (u.full_name && u.full_name.toLowerCase().includes(searchQuery));
+                if (searchQuery) {
+                    const match = u.username.toLowerCase().includes(searchQuery) || 
+                                  (u.full_name && u.full_name.toLowerCase().includes(searchQuery));
+                    if (!match) return false;
+                }
+                if (accessFilter !== 'all') {
+                    const userPerms = matrixData[u.username] || {};
+                    const perms = Object.values(userPerms);
+                    if (accessFilter === 'has_access' && !perms.some(p => p === 'rw' || p === 'ro')) return false;
+                    if (accessFilter === 'rw_only' && !perms.some(p => p === 'rw')) return false;
+                    if (accessFilter === 'ro_only' && !perms.some(p => p === 'ro')) return false;
+                }
+                return true;
             });
 
             activeUsers.forEach((user, idx) => {
@@ -743,6 +787,9 @@
                     if (!matrixData[username]) matrixData[username] = {};
                     matrixData[username][shareName] = access;
                     renderMatrixTable();
+                    if (currentFlyoutUsername === username) {
+                        openUserFlyout(username);
+                    }
                 } else {
                     showToast(result.errors ? result.errors.join(', ') : (result.error || 'Ошибка сохранения прав'), 'error');
                 }
