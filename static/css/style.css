@@ -436,13 +436,14 @@ body {
 
 .nav-container {
     width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 14px 32px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 14px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
+    transition: max-width 0.2s ease, padding 0.2s ease;
 }
 
 .brand-zone {
@@ -494,11 +495,27 @@ body {
 /* Контейнер приложения */
 .main-container {
     width: 100%;
+    max-width: 1440px;
+    margin: 28px auto;
+    padding: 0 24px;
+    flex-grow: 1;
+    box-sizing: border-box;
+    transition: max-width 0.2s ease, padding 0.2s ease;
+}
+
+/* Режим "на всю ширину" (100% full width) */
+body.layout-fullwidth .nav-container,
+html.layout-fullwidth body .nav-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 14px 32px;
+}
+
+body.layout-fullwidth .main-container,
+html.layout-fullwidth body .main-container {
     max-width: 100%;
     margin: 24px 0;
     padding: 0 32px;
-    flex-grow: 1;
-    box-sizing: border-box;
 }
 
 /* Вкладки */

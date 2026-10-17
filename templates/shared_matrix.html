@@ -12,6 +12,9 @@
         if (savedTheme === 'light') {
             document.documentElement.classList.add('light-theme');
         }
+        if (localStorage.getItem('layout_width') === 'full') {
+            document.documentElement.classList.add('layout-fullwidth');
+        }
     </script>
     <style>
         /* Тема оформления — Super Basic Dark & Crisp Light */
@@ -60,11 +63,18 @@
         }
 
         .report-container {
-            max-width: 100%;
+            max-width: 1440px;
             width: 100%;
-            margin: 0;
+            margin: 0 auto;
             padding: 0 16px;
             box-sizing: border-box;
+            transition: max-width 0.2s ease;
+        }
+
+        body.layout-fullwidth .report-container,
+        html.layout-fullwidth body .report-container {
+            max-width: 100%;
+            margin: 0;
         }
 
         /* Заголовок отчета */
@@ -559,6 +569,12 @@
                         <!-- Moon Icon (shown in light theme) -->
                         <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     </button>
+                    <button id="layout-toggle" class="btn-icon-toggle" title="На всю ширину (100%)">
+                        <!-- Expand icon (shown in compact mode) -->
+                        <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        <!-- Compress icon (shown in full width mode) -->
+                        <svg class="compress-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
+                    </button>
                 </div>
             </div>
             
@@ -774,6 +790,47 @@
                     moonIcon.classList.add('hidden');
                 }
             });
+
+            // Инициализация переключателя ширины
+            const layoutToggle = document.getElementById('layout-toggle');
+            function updateLayoutIcons(isFull) {
+                if (!layoutToggle) return;
+                const expandIcon = layoutToggle.querySelector('.expand-icon');
+                const compressIcon = layoutToggle.querySelector('.compress-icon');
+                if (isFull) {
+                    layoutToggle.title = 'Компактный вид (1440px)';
+                    if (expandIcon) expandIcon.classList.add('hidden');
+                    if (compressIcon) compressIcon.classList.remove('hidden');
+                } else {
+                    layoutToggle.title = 'На всю ширину (100%)';
+                    if (expandIcon) expandIcon.classList.remove('hidden');
+                    if (compressIcon) compressIcon.classList.add('hidden');
+                }
+            }
+
+            if (layoutToggle) {
+                const isFullInitial = localStorage.getItem('layout_width') === 'full';
+                if (isFullInitial) {
+                    document.body.classList.add('layout-fullwidth');
+                    document.documentElement.classList.add('layout-fullwidth');
+                }
+                updateLayoutIcons(isFullInitial);
+
+                layoutToggle.addEventListener('click', () => {
+                    const isFull = document.body.classList.contains('layout-fullwidth');
+                    if (isFull) {
+                        document.body.classList.remove('layout-fullwidth');
+                        document.documentElement.classList.remove('layout-fullwidth');
+                        localStorage.setItem('layout_width', 'compact');
+                        updateLayoutIcons(false);
+                    } else {
+                        document.body.classList.add('layout-fullwidth');
+                        document.documentElement.classList.add('layout-fullwidth');
+                        localStorage.setItem('layout_width', 'full');
+                        updateLayoutIcons(true);
+                    }
+                });
+            }
         });
     </script>
 </body>
