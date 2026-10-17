@@ -13,6 +13,8 @@
         if (savedTheme === 'light') {
             document.documentElement.classList.add('light-theme');
         }
+        const savedPalette = localStorage.getItem('theme_palette') || 'classic';
+        document.documentElement.setAttribute('data-palette', savedPalette);
     </script>
 </head>
 <body>
@@ -24,6 +26,46 @@
                 <span class="brand-title">SAMBA <span class="accent-text">PANEL</span></span>
             </div>
             <div class="user-profile-zone">
+                <div class="palette-picker-dropdown">
+                    <button id="palette-toggle-btn" class="btn-icon-toggle" title="Выбрать цветовую тему">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+                        </svg>
+                    </button>
+                    <div id="paletteMenu" class="palette-menu hidden">
+                        <div class="palette-menu-header">Цветовая палитра</div>
+                        <div class="palette-options">
+                            <button type="button" class="palette-option" data-palette-val="classic">
+                                <span class="palette-preview" style="background: linear-gradient(135deg, #141416 50%, #e4e4e7 50%);"></span>
+                                <span class="palette-label">Classic Zinc</span>
+                            </button>
+                            <button type="button" class="palette-option" data-palette-val="cyber_lime">
+                                <span class="palette-preview" style="background: linear-gradient(135deg, #0a0a0a 50%, #b6ff00 50%);"></span>
+                                <span class="palette-label">Cyber Lime</span>
+                            </button>
+                            <button type="button" class="palette-option" data-palette-val="electric_blue">
+                                <span class="palette-preview" style="background: linear-gradient(135deg, #101a46 50%, #245bff 50%);"></span>
+                                <span class="palette-label">Electric Blue</span>
+                            </button>
+                            <button type="button" class="palette-option" data-palette-val="crimson">
+                                <span class="palette-preview" style="background: linear-gradient(135deg, #080808 50%, #c1121f 50%);"></span>
+                                <span class="palette-label">Crimson Red</span>
+                            </button>
+                            <button type="button" class="palette-option" data-palette-val="rust_orange">
+                                <span class="palette-preview" style="background: linear-gradient(135deg, #24150f 50%, #d96b27 50%);"></span>
+                                <span class="palette-label">Rust Orange</span>
+                            </button>
+                            <button type="button" class="palette-option" data-palette-val="graphite_pink">
+                                <span class="palette-preview" style="background: linear-gradient(135deg, #292929 50%, #c88e9b 50%);"></span>
+                                <span class="palette-label">Graphite Pink</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <button id="theme-toggle" class="btn-icon-toggle" title="Переключить тему">
                     <!-- Sun Icon (shown in dark theme) -->
                     <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -1077,6 +1119,39 @@
                     moonIcon.classList.add('hidden');
                 }
             });
+
+            // Инициализация палитры оформления
+            const savedPalette = localStorage.getItem('theme_palette') || 'classic';
+            document.documentElement.setAttribute('data-palette', savedPalette);
+            const paletteBtn = document.getElementById('palette-toggle-btn');
+            const paletteMenu = document.getElementById('paletteMenu');
+            if (paletteBtn && paletteMenu) {
+                const updateActivePalette = (p) => {
+                    paletteMenu.querySelectorAll('.palette-option').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.paletteVal === p);
+                    });
+                };
+                updateActivePalette(savedPalette);
+                paletteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    paletteMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!paletteMenu.contains(e.target) && !paletteBtn.contains(e.target)) {
+                        paletteMenu.classList.add('hidden');
+                    }
+                });
+                paletteMenu.querySelectorAll('.palette-option').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const p = btn.dataset.paletteVal;
+                        document.documentElement.setAttribute('data-palette', p);
+                        localStorage.setItem('theme_palette', p);
+                        updateActivePalette(p);
+                        paletteMenu.classList.add('hidden');
+                    });
+                });
+            }
         });
     </script>
 </body>

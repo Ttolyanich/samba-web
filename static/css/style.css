@@ -12,6 +12,7 @@
     --accent: #e4e4e7;
     --accent-hover: #ffffff;
     --accent-glow: rgba(255, 255, 255, 0.08);
+    --accent-contrast: #141416;
     
     --success: #10b981;
     --danger: #ef4444;
@@ -78,8 +79,158 @@ html {
     --accent: #18181b;
     --accent-hover: #09090b;
     --accent-glow: rgba(0, 0, 0, 0.06);
+    --accent-contrast: #ffffff;
     
     --warning-glow: rgba(245, 158, 11, 0.15);
+}
+
+/* ========================================================
+   ПАЛИТРЫ ОФОРМЛЕНИЯ (6 вариантов: classic + 5 кастомных)
+   ======================================================== */
+
+/* 1. Кислотно-зеленый (Cyber Lime) — Черный #0A0A0A + Кислотно-зеленый #B6FF00 */
+[data-palette="cyber_lime"] {
+    --bg-main: #0a0a0a;
+    --bg-card: #141414;
+    --bg-offset: #1e1e1e;
+    --border-color: #2a2a2a;
+    --border-hover: #3e3e3e;
+    --text-main: #f5f5f5;
+    --text-muted: #8e8e93;
+    --accent: #b6ff00;
+    --accent-hover: #c9ff33;
+    --accent-glow: rgba(182, 255, 0, 0.2);
+    --accent-contrast: #0a0a0a;
+}
+[data-palette="cyber_lime"].light-theme,
+.light-theme[data-palette="cyber_lime"] {
+    --bg-main: #f6f8f2;
+    --bg-card: #ffffff;
+    --bg-offset: #edf2e4;
+    --border-color: #dce4cf;
+    --border-hover: #b5c79e;
+    --text-main: #141a0d;
+    --text-muted: #5e6b52;
+    --accent: #5e8a00;
+    --accent-hover: #486b00;
+    --accent-glow: rgba(94, 138, 0, 0.15);
+    --accent-contrast: #ffffff;
+}
+
+/* 2. Электрический синий (Electric Blue) — Темно-синий #101A46 + Электрический #245BFF */
+[data-palette="electric_blue"] {
+    --bg-main: #0c122e;
+    --bg-card: #131c42;
+    --bg-offset: #1a275c;
+    --border-color: #243575;
+    --border-hover: #384f9f;
+    --text-main: #f0f4ff;
+    --text-muted: #94a3cc;
+    --accent: #245bff;
+    --accent-hover: #4a77ff;
+    --accent-glow: rgba(36, 91, 255, 0.25);
+    --accent-contrast: #ffffff;
+}
+[data-palette="electric_blue"].light-theme,
+.light-theme[data-palette="electric_blue"] {
+    --bg-main: #f2f5fd;
+    --bg-card: #ffffff;
+    --bg-offset: #e5ecfb;
+    --border-color: #ccd7f5;
+    --border-hover: #9bb2ee;
+    --text-main: #0c122e;
+    --text-muted: #576b96;
+    --accent: #1e4bd6;
+    --accent-hover: #163cb0;
+    --accent-glow: rgba(30, 75, 214, 0.15);
+    --accent-contrast: #ffffff;
+}
+
+/* 3. Кроваво-красный (Crimson) — Черный #080808 + Кроваво-красный #C1121F */
+[data-palette="crimson"] {
+    --bg-main: #080808;
+    --bg-card: #151012;
+    --bg-offset: #22161a;
+    --border-color: #381f26;
+    --border-hover: #572b36;
+    --text-main: #fbf5f5;
+    --text-muted: #a89196;
+    --accent: #c1121f;
+    --accent-hover: #de1a29;
+    --accent-glow: rgba(193, 18, 31, 0.25);
+    --accent-contrast: #ffffff;
+}
+[data-palette="crimson"].light-theme,
+.light-theme[data-palette="crimson"] {
+    --bg-main: #fdf5f5;
+    --bg-card: #ffffff;
+    --bg-offset: #fae8e9;
+    --border-color: #f2cbcd;
+    --border-hover: #dba1a5;
+    --text-main: #200f12;
+    --text-muted: #785a5e;
+    --accent: #b0101c;
+    --accent-hover: #8e0b15;
+    --accent-glow: rgba(176, 16, 28, 0.15);
+    --accent-contrast: #ffffff;
+}
+
+/* 4. Ржаво-оранжевый (Rust Orange) — Темно-коричневый #24150F + Ржаво-оранжевый #D96B27 */
+[data-palette="rust_orange"] {
+    --bg-main: #180e0a;
+    --bg-card: #24150f;
+    --bg-offset: #351f16;
+    --border-color: #4c2d20;
+    --border-hover: #6e402e;
+    --text-main: #fdf6f2;
+    --text-muted: #b0998f;
+    --accent: #d96b27;
+    --accent-hover: #f07e38;
+    --accent-glow: rgba(217, 107, 39, 0.25);
+    --accent-contrast: #ffffff;
+}
+[data-palette="rust_orange"].light-theme,
+.light-theme[data-palette="rust_orange"] {
+    --bg-main: #faf6f3;
+    --bg-card: #ffffff;
+    --bg-offset: #f3e8e1;
+    --border-color: #e6d5ca;
+    --border-hover: #caa896;
+    --text-main: #231610;
+    --text-muted: #7a6358;
+    --accent: #b85417;
+    --accent-hover: #964310;
+    --accent-glow: rgba(184, 84, 23, 0.15);
+    --accent-contrast: #ffffff;
+}
+
+/* 5. Графитово-розовый (Graphite Pink) — Графитовый #292929 + Пастельно-розовый #C88E9B */
+[data-palette="graphite_pink"] {
+    --bg-main: #1f1f1f;
+    --bg-card: #292929;
+    --bg-offset: #363636;
+    --border-color: #484848;
+    --border-hover: #636363;
+    --text-main: #f7f3f4;
+    --text-muted: #a89da1;
+    --accent: #c88e9b;
+    --accent-hover: #dba3af;
+    --accent-glow: rgba(200, 142, 155, 0.25);
+    --accent-contrast: #1f1f1f;
+}
+[data-palette="graphite_pink"].light-theme,
+.light-theme[data-palette="graphite_pink"] {
+    --bg-main: #f9f6f7;
+    --bg-card: #ffffff;
+    --bg-offset: #f3eaec;
+    --border-color: #e4d7db;
+    --border-hover: #c7b3b9;
+    --text-main: #21191b;
+    --text-muted: #726266;
+    --accent: #a36170;
+    --accent-hover: #864d5a;
+    --accent-glow: rgba(163, 97, 112, 0.15);
+    --accent-contrast: #ffffff;
 }
 
 * {
@@ -162,7 +313,7 @@ body {
 }
 
 .accent-text {
-    color: var(--text-muted);
+    color: var(--accent);
     font-weight: 700;
 }
 
@@ -208,9 +359,9 @@ body {
 
 /* Кнопки */
 .btn-submit {
-    background-color: #f4f4f5;
-    color: #141416;
-    border: 1px solid #ffffff;
+    background-color: var(--accent);
+    color: var(--accent-contrast, #141416);
+    border: 1px solid var(--accent);
     border-radius: 8px;
     padding: 12px 24px;
     font-size: 14px;
@@ -224,9 +375,9 @@ body {
 }
 
 .btn-submit:hover {
-    background-color: #ffffff;
-    color: #000000;
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+    background-color: var(--accent-hover);
+    color: var(--accent-contrast, #141416);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .btn-submit:active {
@@ -242,14 +393,15 @@ body {
 }
 
 .light-theme .btn-submit {
-    background-color: #18181b;
-    color: #ffffff;
-    border: 1px solid #18181b;
+    background-color: var(--accent);
+    color: var(--accent-contrast, #ffffff);
+    border: 1px solid var(--accent);
 }
 
 .light-theme .btn-submit:hover {
-    background-color: #27272a;
-    color: #ffffff;
+    background-color: var(--accent-hover);
+    color: var(--accent-contrast, #ffffff);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .btn-submit.wide {
@@ -1212,9 +1364,92 @@ body {
 }
 
 .light-theme .accent-text {
-    background: linear-gradient(to right, var(--accent), #7c3aed);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--accent);
+}
+
+/* Выпадающее меню выбора палитры */
+.palette-picker-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.palette-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 210px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.palette-menu-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 6px 8px 8px 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 6px;
+}
+
+.palette-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.palette-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+
+.palette-option:hover {
+    background: var(--bg-offset);
+    border-color: var(--border-color);
+}
+
+.palette-option.active {
+    background: var(--bg-offset);
+    border-color: var(--accent);
+    font-weight: 600;
+}
+
+.palette-preview {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.palette-label {
+    flex-grow: 1;
+}
+
+.palette-check {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
 }
 
 
