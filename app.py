@@ -28,6 +28,7 @@ from samba_utils import (
     sanitize_username,
     sanitize_fullname
 )
+from agent_client import is_agent_available
 
 # Загрузка конфигурации
 CONFIG_PATH = os.getenv("SAMBA_WEB_CONFIG", "config.json")
@@ -339,9 +340,12 @@ def index():
 @app.route('/api/status')
 @login_required
 def api_status():
+    backend_mode = "agent" if is_agent_available() else ("nsenter" if os.environ.get("USE_NSENTER", "").lower() == "true" else "native")
     return jsonify({
         "username": session.get("username"),
-        "smb_conf_path": config["smb_conf_path"]
+        "smb_conf_path": config["smb_conf_path"],
+        "backend_mode": backend_mode,
+        "agent_connected": is_agent_available()
     })
 
 def build_matrix(shares, users):

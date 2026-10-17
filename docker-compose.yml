@@ -9,15 +9,16 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     
-    # Необходимые параметры для выполнения команд на хосте через nsenter
-    privileged: true
-    pid: host
+    # Полная стерилизация: контейнер не имеет root-привилегий и изоляция хоста не нарушается
+    # Никаких privileged: true, никаких pid: host, никакого nsenter
     
     volumes:
       # Папка для сохранения базы данных (журнал аудита, ссылки)
       - ./data:/app/data
       # Монтируем конфигурацию Samba с хоста в режиме только для чтения
       - /etc/samba/smb.conf:/etc/samba/smb.conf:ro
+      # Локальный Unix domain socket для взаимодействия с samba-agent на хосте
+      - /run/samba-agent/samba-agent.sock:/run/samba-agent.sock
       
     environment:
       - SECRET_KEY=${SECRET_KEY}
@@ -29,5 +30,5 @@ services:
       - SMB_CONF_PATH=${SMB_CONF_PATH:-/etc/samba/smb.conf}
       - VERIFY_SSL=${VERIFY_SSL:-true}
       - DATABASE_PATH=/app/data/samba-node.db
-      - USE_NSENTER=true
+      - SAMBA_AGENT_SOCKET=/run/samba-agent.sock
     command: gunicorn --workers 2 --bind 0.0.0.0:${BIND_PORT:-5003} app:app

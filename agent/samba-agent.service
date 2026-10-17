@@ -1,0 +1,18 @@
+[Unit]
+Description=Samba Web Management Host Agent
+Documentation=https://github.com/Ttolyanich/samba-web
+After=network.target smbd.service
+Wants=smbd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/samba-agent/samba_agent.py
+Restart=always
+RestartSec=3
+RuntimeDirectory=samba-agent
+RuntimeDirectoryMode=0755
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

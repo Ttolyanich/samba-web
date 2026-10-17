@@ -1,14 +1,25 @@
 import os
 import re
 import subprocess
+from agent_client import is_agent_available, agent_run_command, agent_path_exists
 
 USE_NSENTER = os.environ.get("USE_NSENTER", "false").lower() == "true"
 
 def run_system_command(cmd, **kwargs):
     """
-    Выполняет системную команду. Если включен режим USE_NSENTER,
-    выполняет её на хост-системе через nsenter.
+    Выполняет системную команду.
+    Приоритет:
+    1. Через Unix domain socket хост-агента (наиболее безопасно, без privileged).
+    2. Через nsenter (устаревший legacy-режим при явном USE_NSENTER=true).
+    3. Локально внутри окружения.
     """
+    if is_agent_available():
+        input_data = kwargs.pop("input", None)
+        capture_output = kwargs.pop("capture_output", True)
+        text = kwargs.pop("text", True)
+        check = kwargs.pop("check", False)
+        return agent_run_command(cmd, input=input_data, capture_output=capture_output, text=text, check=check)
+
     if USE_NSENTER:
         nsenter_prefix = ["nsenter", "--target", "1", "--mount", "--uts", "--ipc", "--net", "--pid", "--"]
         if cmd[0] == "sudo":
@@ -21,9 +32,19 @@ def run_system_command(cmd, **kwargs):
 
 def system_popen(cmd, **kwargs):
     """
-    Создает процесс Popen. Если включен USE_NSENTER,
-    запускает команду на хосте через nsenter.
+    Создает процесс Popen. При наличии агента эмулирует через сокетный вызов с поддержкой communicate().
     """
+    if is_agent_available():
+        class AgentPopenWrapper:
+            def __init__(self, target_cmd):
+                self.target_cmd = target_cmd
+                self.returncode = 0
+            def communicate(self, input=None):
+                res = agent_run_command(self.target_cmd, input=input, capture_output=True, text=True, check=False)
+                self.returncode = res.returncode
+                return res.stdout, res.stderr
+        return AgentPopenWrapper(cmd)
+
     if USE_NSENTER:
         nsenter_prefix = ["nsenter", "--target", "1", "--mount", "--uts", "--ipc", "--net", "--pid", "--"]
         if cmd[0] == "sudo":
@@ -36,8 +57,11 @@ def system_popen(cmd, **kwargs):
 
 def system_path_exists(path):
     """
-    Проверяет существование пути. Если включен USE_NSENTER, проверяет на хосте через test -e.
+    Проверяет существование пути на хосте.
     """
+    if is_agent_available():
+        return agent_path_exists(path)
+
     if USE_NSENTER:
         cmd = ["nsenter", "--target", "1", "--mount", "--uts", "--ipc", "--net", "--pid", "--", "test", "-e", path]
         res = subprocess.run(cmd)

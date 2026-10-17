@@ -61,23 +61,34 @@
 
 ## 🚀 Варианты развертывания
 
-### Вариант 1. Запуск через Docker (Рекомендуемый)
-Панель работает в Docker-контейнере, управляя Samba на хост-системе через механизм `nsenter` (работа в пространствах имен хоста).
+### Вариант 1. Запуск через Docker со стерильным Хост-Агентом (Рекомендуемый для продакшна)
+
+Контейнер работает **полностью без привилегий хоста** (`privileged: false`, нет `pid: host`, нет `nsenter`). Взаимодействие с Samba и POSIX ACL хоста осуществляется через изолированный локальный Unix Domain Socket (`/run/samba-agent/samba-agent.sock`), обслуживаемый легковесным zero-dependency агентом на хосте.
 
 1. **Клонирование проекта:**
    ```bash
    git clone https://github.com/Ttolyanich/samba-web.git /opt/samba-web
    cd /opt/samba-web
    ```
-2. **Настройка окружения:**
+
+2. **Установка Хост-Агента на сервере (выполняется один раз):**
+   ```bash
+   sudo bash agent/install-agent.sh
+   ```
+   *Скрипт регистрирует службу `samba-agent.service` в systemd, запускает локальный сокет `/run/samba-agent/samba-agent.sock` с жёстким белым списком разрешённых команд (`pdbedit`, `smbpasswd`, `getfacl`, `smbstatus`, безопасный `kill` только для процессов `smbd`).*
+
+3. **Настройка окружения панели:**
    ```bash
    cp .env.example .env
-   nano .env # Пропишите CENTRAL_AUTH_URL, SECRET_KEY и NODE_API_TOKEN
+   nano .env # Задайте SECRET_KEY, CENTRAL_AUTH_URL и NODE_API_TOKEN
    ```
-3. **Запуск:**
+
+4. **Запуск изолированного контейнера:**
    ```bash
    docker compose up -d
    ```
+
+---
 
 ### Вариант 2. Нативный запуск (через Systemd)
 1. Установите зависимости:
@@ -102,3 +113,4 @@
    sudo systemctl daemon-reload
    sudo systemctl enable --now samba-web
    ```
+
