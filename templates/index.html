@@ -219,12 +219,12 @@
             <div class="modal-body">
                 <form id="createUserForm" onsubmit="handleCreateUser(event)">
                     <div class="form-group">
-                        <label for="newFullName">ФИО сотрудника (Например: Иван Иванов)</label>
+                        <label for="newFullName">ФИО сотрудника (Например: Имя Фамилия)</label>
                         <input type="text" id="newFullName" required placeholder="Введите имя и фамилию">
                     </div>
                     <div class="form-group">
                         <label for="newUsername">Имя пользователя / Логин (латиница, цифры, _, -, .)</label>
-                        <input type="text" id="newUsername" required placeholder="Например: ivan_ivanov">
+                        <input type="text" id="newUsername" required placeholder="Например: user_alex">
                     </div>
                     <div class="form-group">
                         <label for="newPassword">Пароль</label>
@@ -289,7 +289,7 @@
                     </div>
                     <div class="form-group">
                         <label for="editUsername">Имя пользователя / Логин (латиница, цифры, _, -, .)</label>
-                        <input type="text" id="editUsername" required placeholder="Например: ivan_ivanov">
+                        <input type="text" id="editUsername" required placeholder="Например: user_alex">
                     </div>
                     <div id="editUserError" class="error-msg hidden" style="margin-bottom: 16px;"></div>
                     <div class="modal-footer">
@@ -311,7 +311,7 @@
             <div class="modal-body">
                 <form id="createShareLinkForm" onsubmit="handleCreateShareLink(event)" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
                     <div class="form-group">
-                        <label for="shareDescription">Описание / Цель создания (Например: Для директора компании)</label>
+                        <label for="shareDescription">Описание / Цель создания (Например: Отдел разработки / Аудит)</label>
                         <input type="text" id="shareDescription" required placeholder="Введите описание">
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
